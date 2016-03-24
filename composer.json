@@ -1,0 +1,33 @@
+{
+    "name": "dms/package.content",
+    "description": "The generic content package for the DMS",
+    "authors": [
+        {
+            "name": "Elliot Levin",
+            "email": "elliotlevin@hotmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "repositories": [
+        { "type": "composer", "url": "http://satis.dev:4321/" }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Dms\\Package\\Content\\": "./src/"
+        }
+    },
+    "require": {
+        "php": ">=7.0.0",
+        "dms/core": "dev-master",
+        "dms/common.structure": "dev-master"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Dms\\Package\\Content\\Tests\\": "./tests/Tests/",
+            "Dms\\Core\\Tests\\": "./vendor/dms/core/tests/Tests/"
+        }
+    },
+    "require-dev": {
+        "dms/common.testing": "dev-master"
+    }
+}

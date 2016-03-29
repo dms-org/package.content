@@ -171,7 +171,7 @@ abstract class ContentPackage extends Package
             }
         }
 
-        foreach (array_diff_key($namespacedContentGroups, $this->getModuleNames()) as $removedGroups) {
+        foreach (array_diff_key($namespacedContentGroups, array_fill_keys($this->getModuleNames(), true)) as $removedGroups) {
             $contentGroupsToRemove = array_merge($contentGroupsToRemove, array_values($removedGroups));
         }
 

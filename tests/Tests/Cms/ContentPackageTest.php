@@ -217,4 +217,9 @@ class ContentPackageTest extends CmsTestCase
 
         $this->assertEquals($homeGroup, $this->repo->get(3));
     }
+
+    public function testLoadSummaryTable()
+    {
+        $this->package->loadModule('pages')->getTable(ICrudModule::SUMMARY_TABLE)->loadView();
+    }
 }

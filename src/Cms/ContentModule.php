@@ -122,8 +122,7 @@ class ContentModule extends CrudModule
             $table->view('all', 'All')
                 ->asDefault()
                 ->loadAll()
-                ->where('module_name', '=', $this->name)
-                ->orderByAsc('name');
+                ->where('module_name', '=', $this->name);
         });
     }
 

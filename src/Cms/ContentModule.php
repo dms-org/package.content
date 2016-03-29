@@ -116,6 +116,7 @@ class ContentModule extends CrudModule
 
         $module->summaryTable(function (SummaryTableDefinition $table) use ($labelCallback) {
             $table->mapProperty(ContentGroup::NAMESPACE)->hidden()->to(Field::create('module_name', 'Module')->string());
+            $table->mapProperty(ContentGroup::NAME)->hidden()->to(Field::create('group_name', 'Group Name')->string());
 
             $table->mapCallback($labelCallback)->to(Field::create('name', 'Name')->string());
 
@@ -124,7 +125,8 @@ class ContentModule extends CrudModule
             $table->view('all', 'All')
                 ->asDefault()
                 ->loadAll()
-                ->where('module_name', '=', $this->name);
+                ->where('module_name', '=', $this->name)
+                ->orderByAsc('group_name');
         });
     }
 

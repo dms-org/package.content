@@ -136,10 +136,10 @@ class ContentModule extends CrudModule
                         Form::create()->section('Image', [
                             Field::create('label', 'Name')->string()->readonly(),
                             Field::create('name', 'name')->string()->hidden()->readonly(),
-                            Field::create('alt_text', 'Alt Text')->string()->withEmptyStringAsNull(),
                             Field::create('image', 'Image')
                                 ->image()
                                 ->moveToPathWithRandomFileName($this->config->getImageStorageBasePath(), 32),
+                            Field::create('alt_text', 'Alt Text')->string()->withEmptyStringAsNull(),
                         ])->build()
                     )->required())
                     ->exactLength(count($this->contentGroups[$group->name]['images']))

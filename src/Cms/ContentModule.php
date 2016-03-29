@@ -4,6 +4,7 @@ namespace Dms\Package\Content\Cms;
 
 use Dms\Common\Structure\Field;
 use Dms\Common\Structure\FileSystem\Image;
+use Dms\Common\Structure\Web\Html;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Common\Crud\CrudModule;
 use Dms\Core\Common\Crud\Definition\CrudModuleDefinition;
@@ -197,7 +198,7 @@ class ContentModule extends CrudModule
                 $group->htmlContentAreas->clear();
 
                 foreach ($input as $htmlArea) {
-                    $group->htmlContentAreas[] = new HtmlContentArea($htmlArea['name'], $htmlArea['html']);
+                    $group->htmlContentAreas[] = new HtmlContentArea($htmlArea['name'], $htmlArea['html'] ?? new Html(''));
                 }
             });
 
@@ -230,7 +231,7 @@ class ContentModule extends CrudModule
                 $group->metadata->clear();
 
                 foreach ($input as $key => $value) {
-                    $group->metadata[] = new ContentMetadata($key, $value);
+                    $group->metadata[] = new ContentMetadata($key, $value ?? '');
                 }
             });
 

@@ -57,6 +57,7 @@ class ContentGroup extends Entity
      *
      * @param string $namespace
      * @param string $name
+     * @param IClock $clock
      */
     public function __construct(string $namespace, string $name, IClock $clock)
     {
@@ -134,7 +135,7 @@ class ContentGroup extends Entity
     public function getImage(string $name)
     {
         /** @var ImageContentArea $contentArea */
-        return $this->imageContentAreas->where(function (HtmlContentArea $contentArea) use ($name) {
+        return $this->imageContentAreas->where(function (ImageContentArea $contentArea) use ($name) {
             return $contentArea->name === $name;
         })->first();
     }

@@ -2,6 +2,8 @@
 
 namespace Dms\Package\Content\Core;
 
+use Dms\Core\Exception\InvalidArgumentException;
+use Dms\Core\Util\IClock;
 use Dms\Package\Content\Core\Repositories\IContentGroupRepository;
 
 /**
@@ -27,15 +29,22 @@ class ContentLoaderService
     protected $cache;
 
     /**
+     * @var IClock
+     */
+    protected $clock;
+
+    /**
      * ContentLoaderService constructor.
      *
-     * @param string                  $config
+     * @param ContentConfig                  $config
      * @param IContentGroupRepository $contentGroupRepo
+     * @param IClock                  $clock
      */
-    public function __construct($config, IContentGroupRepository $contentGroupRepo)
+    public function __construct(ContentConfig $config, IContentGroupRepository $contentGroupRepo, IClock $clock)
     {
         $this->config           = $config;
         $this->contentGroupRepo = $contentGroupRepo;
+        $this->clock            = $clock;
     }
 
     /**
@@ -44,9 +53,17 @@ class ContentLoaderService
      * @param string $moduleAndGroupName eg 'pages.home'
      *
      * @return LoadedContentGroup
+     * @throws InvalidArgumentException
      */
     public function load(string $moduleAndGroupName) : LoadedContentGroup
     {
+        if (substr_count($moduleAndGroupName, '.') !== 1) {
+            throw InvalidArgumentException::format(
+                'Invalid content group name supplied to %s: expecting format \'module-name.group-name\', \'%s\' given',
+                __METHOD__, $moduleAndGroupName
+            );
+        }
+
         list($moduleName, $groupName) = explode('.', $moduleAndGroupName);
 
         if (!isset($this->cache[$moduleAndGroupName])) {
@@ -56,7 +73,7 @@ class ContentLoaderService
                     ->where(ContentGroup::NAME, '=', $groupName)
             );
 
-            $this->cache[$moduleAndGroupName] = new LoadedContentGroup($this->config, $groups[0] ?? new ContentGroup($moduleName, $groupName));
+            $this->cache[$moduleAndGroupName] = new LoadedContentGroup($this->config, $groups[0] ?? new ContentGroup($moduleName, $groupName, $this->clock));
         }
 
         return $this->cache[$moduleAndGroupName];

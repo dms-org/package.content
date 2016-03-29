@@ -32,7 +32,7 @@ class ContentGroupDefiner
      */
     public function withImage(string $name, string $label)
     {
-        $this->contentGroup['images'][] = [$name, $label];
+        $this->contentGroup['images'][$name] = ['name' => $name, 'label' => $label];
 
         return $this;
     }
@@ -46,7 +46,7 @@ class ContentGroupDefiner
      */
     public function withHtml(string $name, string $label, string $containerElementCssSelector = null)
     {
-        $this->contentGroup['html_areas'][] = [$name, $label, $containerElementCssSelector];
+        $this->contentGroup['html_areas'][$name] = ['name' => $name, 'label' => $label, 'selector' => $containerElementCssSelector];
 
         return $this;
     }
@@ -59,7 +59,7 @@ class ContentGroupDefiner
      */
     public function withMetadata(string $name, string $label)
     {
-        $this->contentGroup['metadata'][] = [$name, $label];
+        $this->contentGroup['metadata'][$name] = ['name' => $name, 'label' => $label];
 
         return $this;
     }

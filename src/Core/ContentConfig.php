@@ -44,6 +44,6 @@ class ContentConfig
      */
     public function getImageBaseUrl() : string
     {
-        return $this->imageStorageBasePath;
+        return $this->imageBaseUrl;
     }
 }

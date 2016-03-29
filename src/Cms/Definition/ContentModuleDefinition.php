@@ -4,6 +4,7 @@ namespace Dms\Package\Content\Cms\Definition;
 
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Common\Crud\CrudModule;
+use Dms\Package\Content\Cms\ContentModule;
 use Dms\Package\Content\Core\ContentConfig;
 use Dms\Package\Content\Core\Repositories\IContentGroupRepository;
 
@@ -57,6 +58,7 @@ class ContentModuleDefinition
     public function group(string $name, string $label) : ContentGroupDefiner
     {
         $contentGroup = [
+            'name'       => $name,
             'label'      => $label,
             'images'     => [],
             'html_areas' => [],
@@ -78,14 +80,15 @@ class ContentModuleDefinition
     public function page(string $name, string $label, string $pageUrl = null) : ContentGroupDefiner
     {
         $contentGroup = [
+            'name'       => $name,
             'label'      => $label,
             'page_url'   => $pageUrl,
             'images'     => [],
             'html_areas' => [],
             'metadata'   => [
-                ['title', 'Title'],
-                ['description', 'Description'],
-                ['keywords', 'Keywords'],
+                ['name' => 'title', 'label' => 'Title'],
+                ['name' => 'description', 'label' => 'Description'],
+                ['name' => 'keywords', 'label' => 'Keywords'],
             ],
         ];
 
@@ -102,11 +105,23 @@ class ContentModuleDefinition
      */
     public function email(string $name, string $label) : ContentGroupDefiner
     {
-        return $this->group($name, $label);
+        $contentGroup = [
+            'name'       => $name,
+            'label'      => $label,
+            'images'     => [],
+            'html_areas' => [],
+            'metadata'   => [
+                ['name' => 'subject', 'label' => 'Subject'],
+            ],
+        ];
+
+        $this->contentGroups[$name] =& $contentGroup;
+
+        return new ContentGroupDefiner($contentGroup);
     }
 
     public function loadModule(IContentGroupRepository $repo, IAuthSystem $authSystem) : CrudModule
     {
-        return new ContentModule($repo, $authSystem, $this->contentGroups, $this->name, $this->icon, $this->config);
+        return new ContentModule($repo, $authSystem, $this->name, $this->icon, $this->contentGroups, $this->config);
     }
 }

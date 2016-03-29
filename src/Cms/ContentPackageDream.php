@@ -1,6 +1,7 @@
 <?php declare(strict_types = 1);
 
 namespace Dms\Package\Content\Cms;
+use Dms\Package\Content\Cms\Definition\ContentConfigDefinition;
 use Dms\Package\Content\Cms\Definition\ContentModuleDefinition;
 use Dms\Package\Content\Cms\Definition\ContentPackageDefinition;
 
@@ -10,12 +11,16 @@ use Dms\Package\Content\Cms\Definition\ContentPackageDefinition;
  */
 class ContentPackageDream extends ContentPackage
 {
-    protected function defineContent(ContentPackageDefinition $content)
+    public static function defineConfig(ContentConfigDefinition $config)
     {
-        $content
-            ->withImagesStoredUnder(public_path('content/images'))
+        $config
+            ->storeImagesUnder(public_path('content/images'))
             ->mappedToUrl(url('content/images'));
 
+    }
+    
+    protected function defineContent(ContentPackageDefinition $content)
+    {
         $content->module('pages', 'file-text', function (ContentModuleDefinition $content) {
             $content->group('template', 'Template')
                 ->withImage('banner', 'Banner')

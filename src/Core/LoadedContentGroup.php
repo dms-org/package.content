@@ -34,6 +34,22 @@ class LoadedContentGroup
     }
 
     /**
+     * @return ContentConfig
+     */
+    public function getConfig()
+    {
+        return $this->config;
+    }
+
+    /**
+     * @return ContentGroup
+     */
+    public function getContentGroup() : ContentGroup
+    {
+        return $this->content;
+    }
+
+    /**
      * @param string $name
      *
      * @return bool
@@ -78,8 +94,8 @@ class LoadedContentGroup
 
         if ($contentArea) {
             $imagePath = PathHelper::normalize($this->config->getImageStorageBasePath());
-
-            return rtrim('/', $this->config->getImageBaseUrl()) . '/' . ltrim('/', strtr($contentArea->image->getFullPath(), [$imagePath => '', '\\' => '/']));
+            
+            return rtrim($this->config->getImageBaseUrl(), '/') . '/' . ltrim(strtr($contentArea->image->getFullPath(), [$imagePath => '', '\\' => '/']), '/');
         }
 
         return $default;
@@ -95,7 +111,7 @@ class LoadedContentGroup
     {
         $contentArea = $this->content->getImage($name);
 
-        return $contentArea ? $contentArea->altText : $default;
+        return ($contentArea ? $contentArea->altText : null) ?? $default;
     }
 
     /**
@@ -128,11 +144,11 @@ class LoadedContentGroup
     {
         $metadata = [];
 
-        foreach ($this->content->metadata as $metadata) {
-            $name  = htmlentities($metadata->name, ENT_QUOTES);
-            $value = htmlentities($metadata->value, ENT_QUOTES);
-            
-            if ($metadata->name === 'title') {
+        foreach ($this->content->metadata as $metadataItem) {
+            $name  = htmlentities($metadataItem->name, ENT_QUOTES);
+            $value = htmlentities($metadataItem->value, ENT_QUOTES);
+
+            if ($metadataItem->name === 'title') {
                 $metadata[] = '<title>' . $value . '</title>';
             } else {
                 $metadata[] = '<meta name="' . $name . '" content="' . $value . '" />';

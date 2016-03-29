@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 
-namespace Dms\Package\Content\Cms\Definition;
+namespace Dms\Package\Content\Cms;
 
 use Dms\Common\Structure\Field;
 use Dms\Core\Auth\IAuthSystem;
@@ -35,7 +35,7 @@ class ContentModule extends CrudModule
     private $icon;
 
     /**
-     * @var string[]
+     * @var array[]
      */
     private $contentGroups;
 
@@ -67,6 +67,14 @@ class ContentModule extends CrudModule
         $this->contentGroups = $contentGroups;
         $this->config        = $config;
         parent::__construct($dataSource, $authSystem);
+    }
+
+    /**
+     * @return array[]
+     */
+    public function getContentGroups()
+    {
+        return $this->contentGroups;
     }
 
     /**
@@ -122,7 +130,7 @@ class ContentModule extends CrudModule
     protected function defineImageFields(CrudFormDefinition $form, ContentGroup $group)
     {
         if ($this->contentGroups[$group->name]['images'] ?? false) {
-            $fields[] = $form->field(
+            $field = $form->field(
                 Field::create('images', 'Images')
                     ->arrayOf(Field::element()->form(
                         Form::create()->section('Image', [
@@ -135,17 +143,19 @@ class ContentModule extends CrudModule
                         ])->build()
                     ))
                     ->exactLength(count($this->contentGroups[$group->name]['images']))
-            )->bindToCallbacks(function (ContentGroup $group) {
+            )->bindToCallbacks(function (ContentGroup $group) : array {
                 $values = [];
 
-                foreach ($this->contentGroups[$group->name]['images'] as list($name, $label)) {
+                foreach ($this->contentGroups[$group->name]['images'] as $area) {
                     $values[] = [
-                        'name'     => $name,
-                        'label'    => $label,
-                        'alt_text' => $group->hasImage($name) ? $group->getImage($name)->altText : '',
-                        'image'    => $group->hasImage($name) ? $group->getImage($name)->image : null,
+                        'name'     => $area['name'],
+                        'label'    => $area['label'],
+                        'alt_text' => $group->hasImage($area['name']) ? $group->getImage($area['name'])->altText : '',
+                        'image'    => $group->hasImage($area['name']) ? $group->getImage($area['name'])->image : null,
                     ];
                 }
+
+                return $values;
             }, function (ContentGroup $group, array $input) {
                 $group->imageContentAreas->clear();
 
@@ -153,13 +163,15 @@ class ContentModule extends CrudModule
                     $group->imageContentAreas[] = new ImageContentArea($image['name'], $image['image'], $image['alt_text']);
                 }
             });
+
+            $form->section('Images', [$field]);
         }
     }
 
     protected function defineHtmlFields(CrudFormDefinition $form, ContentGroup $group)
     {
         if ($this->contentGroups[$group->name]['html_areas'] ?? false) {
-            $fields[] = $form->field(
+            $field = $form->field(
                 Field::create('html_areas', 'Content')
                     ->arrayOf(Field::element()->form(
                         Form::create()->section('Content', [
@@ -169,16 +181,18 @@ class ContentModule extends CrudModule
                         ])->build()
                     ))
                     ->exactLength(count($this->contentGroups[$group->name]['html_areas']))
-            )->bindToCallbacks(function (ContentGroup $group) {
+            )->bindToCallbacks(function (ContentGroup $group) : array {
                 $values = [];
 
-                foreach ($this->contentGroups[$group->name]['html_areas'] as list($name, $label)) {
+                foreach ($this->contentGroups[$group->name]['html_areas'] as $area) {
                     $values[] = [
-                        'name'  => $label,
-                        'label' => $label,
-                        'html'  => $group->hasHtml($name) ? $group->getHtml($name)->html : null,
+                        'name'  => $area['name'],
+                        'label' => $area['label'],
+                        'html'  => $group->hasHtml($area['name']) ? $group->getHtml($area['name'])->html : null,
                     ];
                 }
+
+                return $values;
             }, function (ContentGroup $group, array $input) {
                 $group->htmlContentAreas->clear();
 
@@ -186,13 +200,15 @@ class ContentModule extends CrudModule
                     $group->htmlContentAreas[] = new HtmlContentArea($htmlArea['name'], $htmlArea['html']);
                 }
             });
+
+            $form->section('Content', [$field]);
         }
     }
 
     protected function defineMetadataFields(CrudFormDefinition $form, ContentGroup $group)
     {
         if ($this->contentGroups[$group->name]['metadata'] ?? false) {
-            $fields[] = $form->field(
+            $field = $form->field(
                 Field::create('metadata', 'Metadata')
                     ->arrayOf(Field::element()->form(
                         Form::create()->section('Content', [
@@ -202,23 +218,27 @@ class ContentModule extends CrudModule
                         ])->build()
                     ))
                     ->exactLength(count($this->contentGroups[$group->name]['metadata']))
-            )->bindToCallbacks(function (ContentGroup $group) {
+            )->bindToCallbacks(function (ContentGroup $group) : array {
                 $values = [];
 
-                foreach ($this->contentGroups[$group->name]['metadata'] as list($name, $label)) {
+                foreach ($this->contentGroups[$group->name]['metadata'] as $item) {
                     $values[] = [
-                        'name'  => $label,
-                        'label' => $label,
-                        'value' => $group->hasMetadata($name) ? $group->getMetadata($name)->value : null,
+                        'name'  => $item['name'],
+                        'label' => $item['label'],
+                        'value' => $group->hasMetadata($item['name']) ? $group->getMetadata($item['name'])->value : null,
                     ];
                 }
+
+                return $values;
             }, function (ContentGroup $group, array $input) {
                 $group->metadata->clear();
 
                 foreach ($input as $metadata) {
-                    $group->metadata[] = new ContentMetadata($metadata['name'], $metadata['html']);
+                    $group->metadata[] = new ContentMetadata($metadata['name'], $metadata['value']);
                 }
             });
+
+            $form->section('Metadata', [$field]);
         }
     }
 }

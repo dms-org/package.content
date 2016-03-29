@@ -27,17 +27,13 @@ class ContentPackageDefinition
     protected $contentModuleDefinitions = [];
 
     /**
-     * Defines the file path which to store the uploaded images under.
+     * ContentPackageDefinition constructor.
      *
-     * @param string $filePath
-     *
-     * @return ContentRootImageUrlDefiner
+     * @param ContentConfig $config
      */
-    public function withImagesStoredUnder(string $filePath) : ContentRootImageUrlDefiner
+    public function __construct(ContentConfig $config)
     {
-        return new ContentRootImageUrlDefiner(function (string $rootImageUrl) use ($filePath) {
-            $this->config = new ContentConfig($filePath, $rootImageUrl);
-        });
+        $this->config = $config;
     }
 
     /**
@@ -72,13 +68,6 @@ class ContentPackageDefinition
      */
     public function module(string $name, string $icon, callable $definitionCallback)
     {
-        if (!$this->config) {
-            throw InvalidOperationException::format(
-                'Invalid call to %s: config has not been defined yet, call withImagesStoredUnder(...) method to setup config first',
-                __METHOD__
-            );
-        }
-
         $definition = new ContentModuleDefinition($name, $icon, $this->config);
         $definitionCallback($definition);
 

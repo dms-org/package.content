@@ -66,6 +66,7 @@ class ContentGroupMapper extends EntityMapper
                 $map->property(HtmlContentArea::NAME)->to('name')->asVarchar(255);
                 $map->embedded(HtmlContentArea::HTML)
                     ->using(new HtmlMapper('html'));
+                $map->column('content_group_id')->asUnsignedInt();
 
                 $map->unique('content_group_html_unique_index')
                     ->on(['content_group_id', 'name']);
@@ -78,9 +79,11 @@ class ContentGroupMapper extends EntityMapper
             ->usingCustom(function (MapperDefinition $map) {
                 $map->type(ImageContentArea::class);
 
+                $map->column('content_group_id')->asUnsignedInt();
                 $map->property(ImageContentArea::NAME)->to('name')->asVarchar(255);
                 $map->embedded(ImageContentArea::IMAGE)
-                    ->using(new ImageMapper('path', 'client_file_name'));
+                    ->using(new ImageMapper('image_path', 'client_file_name', $this->contentConfig->getImageStorageBasePath()));
+                $map->property(ImageContentArea::ALT_TEXT)->to('alt_text')->nullable()->asVarchar(1000);
 
                 $map->unique('content_group_images_unique_index')
                     ->on(['content_group_id', 'name']);
@@ -93,14 +96,15 @@ class ContentGroupMapper extends EntityMapper
             ->usingCustom(function (MapperDefinition $map) {
                 $map->type(ContentMetadata::class);
 
+                $map->column('content_group_id')->asUnsignedInt();
                 $map->property(ContentMetadata::NAME)->to('name')->asVarchar(255);
-                $map->property(ContentMetadata::VALUE)->to('value')->asVarchar(500);
+                $map->property(ContentMetadata::VALUE)->to('value')->asVarchar(1000);
 
                 $map->unique('content_group_metadata_unique_index')
                     ->on(['content_group_id', 'name']);
             });
 
-        $map->embeddedCollection(ContentGroup::UPDATED_AT)
+        $map->embedded(ContentGroup::UPDATED_AT)
             ->using(new DateTimeMapper('updated_at'));
     }
 }

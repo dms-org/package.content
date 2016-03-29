@@ -12,6 +12,12 @@ use Dms\Package\Content\Core\ContentGroup;
  */
 interface IContentGroupRepository extends IRepository
 {
+    /**
+     * {@inheritDoc}
+     *
+     * @return ContentGroup[]
+     */
+    public function getAll() : array;
 
     /**
      * {@inheritDoc}

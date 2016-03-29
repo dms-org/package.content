@@ -35,10 +35,6 @@ use Dms\Package\Content\Persistence\DbContentGroupRepository;
  * <code>
  * protected function defineContent(ContentPackageDefinition $content)
  * {
- *      $content
- *          ->withImagesStoredUnder(public_path('content/images'))
- *          ->mappedToUrl(url('content/images'));
- *
  *      $content->module('pages', 'file-text', function (ContentModuleDefinition $content) {
  *          $content->group('template', 'Template')
  *              ->withImage('banner', 'Banner')

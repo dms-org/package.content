@@ -4,7 +4,6 @@ namespace Dms\Package\Content\Tests\Cms;
 
 use Dms\Common\Structure\FileSystem\Image;
 use Dms\Common\Structure\FileSystem\UploadAction;
-use Dms\Common\Structure\FileSystem\UploadedImage;
 use Dms\Common\Structure\Web\Html;
 use Dms\Common\Testing\CmsTestCase;
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
@@ -199,16 +198,16 @@ class ContentPackageTest extends CmsTestCase
                 ],
             ],
             'metadata'                       => [
-                ['value' => 'Title'],
-                ['value' => 'Desc'],
-                ['value' => 'Keywords'],
+                'title'       => 'Title',
+                'description' => 'Desc',
+                'keywords'    => 'Keywords',
             ],
         ]);
 
         $homeGroup = new ContentGroup('pages', 'home', $this->mockClock());
         $homeGroup->setId(3);
-        $homeGroup->htmlContentAreas[]  = new HtmlContentArea('info', new Html('Info'));
-        $image                          = new Image(__DIR__ . '/Fixtures/image.gif', 'client-name.png');
+        $homeGroup->htmlContentAreas[] = new HtmlContentArea('info', new Html('Info'));
+        $image                         = new Image(__DIR__ . '/Fixtures/image.gif', 'client-name.png');
         $image->getWidth();
         $homeGroup->imageContentAreas[] = new ImageContentArea('banner', $image, 'Abc');
         $homeGroup->metadata[]          = new ContentMetadata('title', 'Title');

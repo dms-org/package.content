@@ -134,7 +134,7 @@ class ContentModule extends CrudModule
                     ->arrayOf(Field::element()->form(
                         Form::create()->section('Image', [
                             Field::create('label', 'Name')->string()->readonly(),
-                            Field::create('name', 'Name')->string()->hidden()->readonly(),
+                            Field::create('name', 'name')->string()->hidden()->readonly(),
                             Field::create('alt_text', 'Alt Text')->string()->withEmptyStringAsNull(),
                             Field::create('image', 'Image')
                                 ->image()
@@ -175,7 +175,7 @@ class ContentModule extends CrudModule
                     ->arrayOf(Field::element()->form(
                         Form::create()->section('Content', [
                             Field::create('label', 'Name')->string()->readonly(),
-                            Field::create('name', 'Name')->string()->hidden()->readonly(),
+                            Field::create('name', 'name')->string()->hidden()->readonly(),
                             Field::create('html', 'Content')->html(),
                         ])->build()
                     ))
@@ -207,33 +207,29 @@ class ContentModule extends CrudModule
     protected function defineMetadataFields(CrudFormDefinition $form, ContentGroup $group)
     {
         if ($this->contentGroups[$group->name]['metadata'] ?? false) {
+            $fields = [];
+
+            foreach ($this->contentGroups[$group->name]['metadata'] as $item) {
+                $fields[] = Field::create($item['name'], $item['label'])->string();
+            }
+
             $field = $form->field(
                 Field::create('metadata', 'Metadata')
-                    ->arrayOf(Field::element()->form(
-                        Form::create()->section('Content', [
-                            Field::create('label', 'Name')->string()->readonly(),
-                            Field::create('name', 'Name')->string()->hidden()->readonly(),
-                            Field::create('value', 'Value')->string(),
-                        ])->build()
-                    ))
-                    ->exactLength(count($this->contentGroups[$group->name]['metadata']))
+                    ->form(Form::create()->section('', $fields)->build())
+                    ->required()
             )->bindToCallbacks(function (ContentGroup $group) : array {
                 $values = [];
 
                 foreach ($this->contentGroups[$group->name]['metadata'] as $item) {
-                    $values[] = [
-                        'name'  => $item['name'],
-                        'label' => $item['label'],
-                        'value' => $group->hasMetadata($item['name']) ? $group->getMetadata($item['name'])->value : null,
-                    ];
+                    $values[$item['name']] = $group->hasMetadata($item['name']) ? $group->getMetadata($item['name'])->value : null;
                 }
 
                 return $values;
             }, function (ContentGroup $group, array $input) {
                 $group->metadata->clear();
 
-                foreach ($input as $metadata) {
-                    $group->metadata[] = new ContentMetadata($metadata['name'], $metadata['value']);
+                foreach ($input as $key => $value) {
+                    $group->metadata[] = new ContentMetadata($key, $value);
                 }
             });
 

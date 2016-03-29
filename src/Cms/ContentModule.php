@@ -3,6 +3,7 @@
 namespace Dms\Package\Content\Cms;
 
 use Dms\Common\Structure\Field;
+use Dms\Common\Structure\FileSystem\Image;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Common\Crud\CrudModule;
 use Dms\Core\Common\Crud\Definition\CrudModuleDefinition;
@@ -140,7 +141,7 @@ class ContentModule extends CrudModule
                                 ->image()
                                 ->moveToPathWithRandomFileName($this->config->getImageStorageBasePath(), 32),
                         ])->build()
-                    ))
+                    )->required())
                     ->exactLength(count($this->contentGroups[$group->name]['images']))
             )->bindToCallbacks(function (ContentGroup $group) : array {
                 $values = [];
@@ -159,7 +160,7 @@ class ContentModule extends CrudModule
                 $group->imageContentAreas->clear();
 
                 foreach ($input as $image) {
-                    $group->imageContentAreas[] = new ImageContentArea($image['name'], $image['image'], $image['alt_text']);
+                    $group->imageContentAreas[] = new ImageContentArea($image['name'], $image['image'] ?? new Image(''), $image['alt_text']);
                 }
             });
 
@@ -178,7 +179,7 @@ class ContentModule extends CrudModule
                             Field::create('name', 'name')->string()->hidden()->readonly(),
                             Field::create('html', 'Content')->html(),
                         ])->build()
-                    ))
+                    )->required())
                     ->exactLength(count($this->contentGroups[$group->name]['html_areas']))
             )->bindToCallbacks(function (ContentGroup $group) : array {
                 $values = [];

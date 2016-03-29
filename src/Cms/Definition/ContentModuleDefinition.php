@@ -4,6 +4,7 @@ namespace Dms\Package\Content\Cms\Definition;
 
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Common\Crud\CrudModule;
+use Dms\Core\Util\IClock;
 use Dms\Package\Content\Cms\ContentModule;
 use Dms\Package\Content\Core\ContentConfig;
 use Dms\Package\Content\Core\Repositories\IContentGroupRepository;
@@ -120,8 +121,8 @@ class ContentModuleDefinition
         return new ContentGroupDefiner($contentGroup);
     }
 
-    public function loadModule(IContentGroupRepository $repo, IAuthSystem $authSystem) : CrudModule
+    public function loadModule(IContentGroupRepository $repo, IAuthSystem $authSystem, IClock $clock) : CrudModule
     {
-        return new ContentModule($repo, $authSystem, $this->name, $this->icon, $this->contentGroups, $this->config);
+        return new ContentModule($repo, $authSystem, $this->name, $this->icon, $this->contentGroups, $this->config, $clock);
     }
 }

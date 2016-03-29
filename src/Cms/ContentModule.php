@@ -2,6 +2,7 @@
 
 namespace Dms\Package\Content\Cms;
 
+use Dms\Common\Structure\DateTime\DateTime;
 use Dms\Common\Structure\Field;
 use Dms\Common\Structure\FileSystem\Image;
 use Dms\Common\Structure\Web\Html;
@@ -12,6 +13,7 @@ use Dms\Core\Common\Crud\Definition\Form\CrudFormDefinition;
 use Dms\Core\Common\Crud\Definition\Table\SummaryTableDefinition;
 use Dms\Core\Common\Crud\UnsupportedActionException;
 use Dms\Core\Form\Builder\Form;
+use Dms\Core\Util\IClock;
 use Dms\Package\Content\Core\ContentConfig;
 use Dms\Package\Content\Core\ContentGroup;
 use Dms\Package\Content\Core\ContentMetadata;
@@ -45,6 +47,11 @@ class ContentModule extends CrudModule
      * @var ContentConfig
      */
     private $config;
+    
+    /**
+     * @var IClock
+     */
+    private $clock;
 
     /**
      * ContentModule constructor.
@@ -55,6 +62,7 @@ class ContentModule extends CrudModule
      * @param string                  $icon
      * @param array                   $contentGroups
      * @param ContentConfig           $config
+     * @param IClock                  $clock
      */
     public function __construct(
         IContentGroupRepository $dataSource,
@@ -62,12 +70,15 @@ class ContentModule extends CrudModule
         string $name,
         string $icon,
         array $contentGroups,
-        ContentConfig $config
+        ContentConfig $config,
+        IClock $clock
     ) {
         $this->icon          = $icon;
         $this->name          = $name;
         $this->contentGroups = $contentGroups;
         $this->config        = $config;
+        $this->clock         = $clock;
+
         parent::__construct($dataSource, $authSystem);
     }
 
@@ -111,6 +122,7 @@ class ContentModule extends CrudModule
 
             $form->onSubmit(function (ContentGroup $contentGroup) {
                 $contentGroup->namespace = $this->name;
+                $contentGroup->updatedAt = new DateTime($this->clock->utcNow());
             });
         });
 

@@ -6,6 +6,7 @@ use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Exception\InvalidOperationException;
 use Dms\Core\Ioc\IIocContainer;
 use Dms\Core\Package\Definition\PackageDefinition;
+use Dms\Core\Util\IClock;
 use Dms\Package\Content\Core\ContentConfig;
 use Dms\Package\Content\Core\Repositories\IContentGroupRepository;
 
@@ -80,7 +81,11 @@ class ContentPackageDefinition
 
         foreach ($this->contentModuleDefinitions as $name => $module) {
             $moduleMap[$name] = function () use ($iocContainer, $module) {
-                return $module->loadModule($iocContainer->get(IContentGroupRepository::class), $iocContainer->get(IAuthSystem::class));
+                return $module->loadModule(
+                    $iocContainer->get(IContentGroupRepository::class),
+                    $iocContainer->get(IAuthSystem::class),
+                    $iocContainer->get(IClock::class)
+                );
             };
         }
 

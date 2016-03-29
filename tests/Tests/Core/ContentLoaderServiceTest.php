@@ -29,7 +29,7 @@ class ContentLoaderServiceTest extends CmsTestCase
 
     public function setUp()
     {
-        $this->loader = new ContentLoaderService(new ContentConfig(__DIR__, '/some/url'), $this->mockRepo(), new DateTimeClock());
+        $this->loader = new ContentLoaderService(new ContentConfig(__DIR__ . '/../Cms/Fixtures', '/some/url'), $this->mockRepo(), new DateTimeClock());
     }
 
     private function mockRepo() : IContentGroupRepository
@@ -42,7 +42,7 @@ class ContentLoaderServiceTest extends CmsTestCase
         $contentGroup->htmlContentAreas[] = new HtmlContentArea('html-area-2', new Html('<small>123</small>'));
 
         $contentGroup->imageContentAreas[] = new ImageContentArea('image-area-1', new Image(__FILE__));
-        $contentGroup->imageContentAreas[] = new ImageContentArea('image-area-2', new Image(__FILE__, 'client-name.png'), 'alt-text');
+        $contentGroup->imageContentAreas[] = new ImageContentArea('image-area-2', new Image(__DIR__ . '/../Cms/Fixtures/image.gif', 'client-name.png'), 'alt-text');
 
         $contentGroup->metadata[] = new ContentMetadata('key', 'val');
         $contentGroup->metadata[] = new ContentMetadata('title', 'Some Title');
@@ -64,10 +64,9 @@ class ContentLoaderServiceTest extends CmsTestCase
         $this->assertSame('name', $group->getContentGroup()->name);
         $this->assertSame('<strong>ABC</strong>', $group->getHtml('html-area-1'));
         $this->assertSame('<small>123</small>', $group->getHtml('html-area-2'));
-        $this->assertSame('/some/url/' . basename(__FILE__), $group->getImageUrl('image-area-1'));
+        $this->assertSame('', $group->getImageUrl('image-area-1'));
         $this->assertSame('', $group->getImageAltText('image-area-1'));
-        $this->assertSame('/some/url/' . basename(__FILE__), $group->getImageUrl('image-area-2'));
-        $this->assertSame('alt-text', $group->getImageAltText('image-area-2'));
+        $this->assertSame('/some/url/image.gif', $group->getImageUrl('image-area-2'));
         $this->assertSame('val', $group->getMetadata('key'));
         $this->assertSame('Some Title', $group->getMetadata('title'));
         $this->assertSame('<meta name="key" content="val" />' . PHP_EOL . '<title>Some Title</title>', $group->renderMetadataAsHtml());

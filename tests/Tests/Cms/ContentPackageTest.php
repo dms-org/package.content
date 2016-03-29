@@ -218,6 +218,13 @@ class ContentPackageTest extends CmsTestCase
         $this->assertEquals($homeGroup, $this->repo->get(3));
     }
 
+    public function testDetails()
+    {
+        $this->package->loadModule('pages')->getParameterizedAction(ICrudModule::DETAILS_ACTION)->run([
+            IObjectAction::OBJECT_FIELD_NAME => 3,
+        ]);
+    }
+
     public function testLoadSummaryTable()
     {
         $this->package->loadModule('pages')->getTable(ICrudModule::SUMMARY_TABLE)->loadView();

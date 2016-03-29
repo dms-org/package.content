@@ -1,6 +1,7 @@
 <?php declare(strict_types = 1);
 
 namespace Dms\Package\Content\Core;
+use Dms\Common\Structure\FileSystem\Directory;
 
 /**
  * The content configuration class.
@@ -27,7 +28,7 @@ class ContentConfig
      */
     public function __construct(string $imageStorageBasePath, string $imageBaseUrl)
     {
-        $this->imageStorageBasePath = $imageStorageBasePath;
+        $this->imageStorageBasePath = (new Directory($imageStorageBasePath))->getFullPath();
         $this->imageBaseUrl         = $imageBaseUrl;
     }
 

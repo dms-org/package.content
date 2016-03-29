@@ -123,7 +123,7 @@ class ContentGroup extends Entity
     public function hasImage(string $name) : bool
     {
         return $this->imageContentAreas->any(function (ImageContentArea $contentArea) use ($name) {
-            return $contentArea->name === $name;
+            return $contentArea->image->isValidImage() && $contentArea->name === $name;
         });
     }
 
@@ -136,7 +136,7 @@ class ContentGroup extends Entity
     {
         /** @var ImageContentArea $contentArea */
         return $this->imageContentAreas->where(function (ImageContentArea $contentArea) use ($name) {
-            return $contentArea->name === $name;
+            return $contentArea->image->isValidImage() && $contentArea->name === $name;
         })->first();
     }
 

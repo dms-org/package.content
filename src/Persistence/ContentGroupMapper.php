@@ -50,8 +50,8 @@ class ContentGroupMapper extends EntityMapper
 
         $map->idToPrimaryKey('id');
 
-        $map->property(ContentGroup::NAMESPACE)->to('namespace')->asVarchar(20);
-        $map->property(ContentGroup::NAME)->to('name')->asVarchar(20);
+        $map->property(ContentGroup::NAMESPACE)->to('namespace')->asVarchar(25);
+        $map->property(ContentGroup::NAME)->to('name')->asVarchar(25);
 
         $map->unique('content_group_name_unique_index')
             ->on(['namespace', 'name']);
@@ -63,7 +63,7 @@ class ContentGroupMapper extends EntityMapper
             ->usingCustom(function (MapperDefinition $map) {
                 $map->type(HtmlContentArea::class);
 
-                $map->property(HtmlContentArea::NAME)->to('name')->asVarchar(255);
+                $map->property(HtmlContentArea::NAME)->to('name')->asVarchar(100);
                 $map->embedded(HtmlContentArea::HTML)
                     ->using(new HtmlMapper('html'));
                 $map->column('content_group_id')->asUnsignedInt();
@@ -80,7 +80,7 @@ class ContentGroupMapper extends EntityMapper
                 $map->type(ImageContentArea::class);
 
                 $map->column('content_group_id')->asUnsignedInt();
-                $map->property(ImageContentArea::NAME)->to('name')->asVarchar(255);
+                $map->property(ImageContentArea::NAME)->to('name')->asVarchar(100);
                 $map->embedded(ImageContentArea::IMAGE)
                     ->using(new ImageMapper('image_path', 'client_file_name', $this->contentConfig->getImageStorageBasePath()));
                 $map->property(ImageContentArea::ALT_TEXT)->to('alt_text')->nullable()->asVarchar(1000);
@@ -97,7 +97,7 @@ class ContentGroupMapper extends EntityMapper
                 $map->type(ContentMetadata::class);
 
                 $map->column('content_group_id')->asUnsignedInt();
-                $map->property(ContentMetadata::NAME)->to('name')->asVarchar(255);
+                $map->property(ContentMetadata::NAME)->to('name')->asVarchar(100);
                 $map->property(ContentMetadata::VALUE)->to('value')->asVarchar(1000);
 
                 $map->unique('content_group_metadata_unique_index')

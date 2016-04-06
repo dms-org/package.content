@@ -230,15 +230,16 @@ abstract class ContentPackage extends Package
             $contentGroup->imageContentAreas[] = new ImageContentArea($area['name'], new Image(''));
         }
 
-        $contentGroup->metadata->removeWhere(function (ContentMetadata $metadata) use ($contentGroupSchema) {
-            return !isset($contentGroupSchema['metadata'][$metadata->name]);
+        $validMetadataOptions = array_fill_keys(array_column($contentGroupSchema['metadata'], 'name'), true);
+        $contentGroup->metadata->removeWhere(function (ContentMetadata $metadata) use ($validMetadataOptions) {
+            return !isset($validMetadataOptions[$metadata->name]);
         });
 
         $metadataNames = $contentGroup->metadata->indexBy(function (ContentMetadata $content) {
             return $content->name;
         })->asArray();
 
-        foreach (array_diff_key($contentGroupSchema['metadata'], $metadataNames) as $item) {
+        foreach (array_diff_key($validMetadataOptions, $metadataNames) as $item) {
             $contentGroup->metadata[] = new ContentMetadata($item['name'], '');
         }
 

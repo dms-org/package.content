@@ -110,7 +110,8 @@ abstract class ContentPackage extends Package
     protected static function defineConfig(ContentConfigDefinition $config)
     {
         throw NotImplementedException::format(
-            'Invalid content package class %s: the %s static method must be overridden'
+            'Invalid content package class %s: the \'%s\' static method must be overridden',
+            get_called_class(), __FUNCTION__
         );
     }
 

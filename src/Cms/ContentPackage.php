@@ -239,9 +239,9 @@ abstract class ContentPackage extends Package
         $metadataNames = $contentGroup->metadata->indexBy(function (ContentMetadata $content) {
             return $content->name;
         })->asArray();
-
-        foreach (array_diff_key($validMetadataOptions, $metadataNames) as $item) {
-            $contentGroup->metadata[] = new ContentMetadata($item['name'], '');
+        
+        foreach (array_diff_key($validMetadataOptions, $metadataNames) as $name => $unusedVariable) {
+            $contentGroup->metadata[] = new ContentMetadata($name, '');
         }
 
         return $contentGroup;

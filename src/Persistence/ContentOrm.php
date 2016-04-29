@@ -2,6 +2,7 @@
 
 namespace Dms\Package\Content\Persistence;
 
+use Dms\Core\Ioc\IIocContainer;
 use Dms\Core\Persistence\Db\Mapping\Definition\Orm\OrmDefinition;
 use Dms\Core\Persistence\Db\Mapping\Orm;
 use Dms\Package\Content\Core\ContentGroup;
@@ -11,6 +12,16 @@ use Dms\Package\Content\Core\ContentGroup;
  */
 class ContentOrm extends Orm
 {
+    /**
+     * Orm constructor.
+     *
+     * @param IIocContainer $iocContainer
+     */
+    public function __construct(IIocContainer $iocContainer)
+    {
+        parent::__construct($iocContainer);
+    }
+
     /**
      * Defines the object mappers registered in the orm.
      *

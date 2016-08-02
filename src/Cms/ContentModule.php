@@ -111,7 +111,7 @@ class ContentModule extends CrudModule
 
         $module->crudForm(function (CrudFormDefinition $form) {
             if ($form->isCreateForm()) {
-                throw new UnsupportedActionException();
+                $form->unsupported();
             }
 
             $form->dependentOnObject(function (CrudFormDefinition $form, ContentGroup $group) {

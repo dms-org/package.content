@@ -9,7 +9,10 @@
     ],
     "minimum-stability": "stable",
     "repositories": [
-        { "type": "composer", "url": "http://satis.dev:4321/" }
+        {
+            "type": "composer",
+            "url": "https://api.package.studio/meta/composer"
+        }
     ],
     "autoload": {
         "psr-4": {
@@ -18,8 +21,8 @@
     },
     "require": {
         "php": ">=7.0.0",
-        "dms/core": "dev-master",
-        "dms/common.structure": "dev-master"
+        "dms/core": "^0.1",
+        "dms/common.structure": "^0.1"
     },
     "autoload-dev": {
         "psr-4": {

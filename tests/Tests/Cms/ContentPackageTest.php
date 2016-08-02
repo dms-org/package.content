@@ -6,6 +6,8 @@ use Dms\Common\Structure\FileSystem\Image;
 use Dms\Common\Structure\FileSystem\UploadAction;
 use Dms\Common\Structure\Web\Html;
 use Dms\Common\Testing\CmsTestCase;
+use Dms\Core\Auth\IAuthSystem;
+use Dms\Core\Auth\IAuthSystemInPackageContext;
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\ICrudModule;
 use Dms\Core\File\UploadedImageProxy;
@@ -55,7 +57,16 @@ class ContentPackageTest extends CmsTestCase
                     return $this->mockClock();
                 }
 
+                if ($class === IAuthSystem::class) {
+                    return $this->getMockWithoutInvokingTheOriginalConstructor(IAuthSystemInPackageContext::class);
+                }
+
                 return $this->getMockWithoutInvokingTheOriginalConstructor($class);
+            });
+
+        $ioc->method('bindForCallback')
+            ->willReturnCallback(function (string $abstract, $concrete, callable $callback) {
+                return $callback();
             });
 
 

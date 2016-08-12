@@ -196,23 +196,15 @@ class ContentPackageTest extends CmsTestCase
     {
         $this->package->loadModule('pages')->getParameterizedAction(ICrudModule::EDIT_ACTION)->run([
             IObjectAction::OBJECT_FIELD_NAME => 3,
-            'html_areas'                     => [
-                ['html' => 'Info'],
+            'image_banner'                   => [
+                'action' => UploadAction::STORE_NEW,
+                'file'   => new UploadedImageProxy(new Image(__DIR__ . '/Fixtures/image.gif', 'client-name.png')),
             ],
-            'images'                         => [
-                [
-                    'image'    => [
-                        'action' => UploadAction::STORE_NEW,
-                        'file'   => new UploadedImageProxy(new Image(__DIR__ . '/Fixtures/image.gif', 'client-name.png')),
-                    ],
-                    'alt_text' => 'Abc',
-                ],
-            ],
-            'metadata'                       => [
-                'title'       => 'Title',
-                'description' => 'Desc',
-                'keywords'    => 'Keywords',
-            ],
+            'image_alt_text_banner'          => 'Abc',
+            'html_info'                      => 'Info',
+            'metadata_title'                 => 'Title',
+            'metadata_description'           => 'Desc',
+            'metadata_keywords'              => 'Keywords',
         ]);
 
         $homeGroup = new ContentGroup('pages', 'home', $this->mockClock());

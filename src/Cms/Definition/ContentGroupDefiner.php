@@ -15,6 +15,11 @@ class ContentGroupDefiner
     private $contentGroup;
 
     /**
+     * @var int
+     */
+    private $order = 0;
+
+    /**
      * ContentGroupDefiner constructor.
      *
      * @param array $contentGroup
@@ -32,7 +37,7 @@ class ContentGroupDefiner
      */
     public function withImage(string $name, string $label)
     {
-        $this->contentGroup['images'][$name] = ['name' => $name, 'label' => $label];
+        $this->contentGroup['images'][$name] = ['name' => $name, 'label' => $label, 'order' => $this->order++];
 
         return $this;
     }
@@ -46,7 +51,12 @@ class ContentGroupDefiner
      */
     public function withHtml(string $name, string $label, string $containerElementCssSelector = null)
     {
-        $this->contentGroup['html_areas'][$name] = ['name' => $name, 'label' => $label, 'selector' => $containerElementCssSelector];
+        $this->contentGroup['html_areas'][$name] = [
+            'name'     => $name,
+            'label'    => $label,
+            'selector' => $containerElementCssSelector,
+            'order'    => $this->order++,
+        ];
 
         return $this;
     }
@@ -59,7 +69,7 @@ class ContentGroupDefiner
      */
     public function withMetadata(string $name, string $label)
     {
-        $this->contentGroup['metadata'][$name] = ['name' => $name, 'label' => $label];
+        $this->contentGroup['metadata'][$name] = ['name' => $name, 'label' => $label, 'order' => $this->order++];
 
         return $this;
     }

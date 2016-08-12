@@ -5,14 +5,11 @@ namespace Dms\Package\Content\Cms;
 use Dms\Common\Structure\DateTime\DateTime;
 use Dms\Common\Structure\Field;
 use Dms\Common\Structure\FileSystem\Image;
-use Dms\Common\Structure\Web\Html;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Common\Crud\CrudModule;
 use Dms\Core\Common\Crud\Definition\CrudModuleDefinition;
 use Dms\Core\Common\Crud\Definition\Form\CrudFormDefinition;
 use Dms\Core\Common\Crud\Definition\Table\SummaryTableDefinition;
-use Dms\Core\Common\Crud\UnsupportedActionException;
-use Dms\Core\Form\Builder\Form;
 use Dms\Core\Util\IClock;
 use Dms\Package\Content\Core\ContentConfig;
 use Dms\Package\Content\Core\ContentGroup;
@@ -47,7 +44,7 @@ class ContentModule extends CrudModule
      * @var ContentConfig
      */
     private $config;
-    
+
     /**
      * @var IClock
      */
@@ -115,9 +112,43 @@ class ContentModule extends CrudModule
             }
 
             $form->dependentOnObject(function (CrudFormDefinition $form, ContentGroup $group) {
-                $this->defineImageFields($form, $group);
-                $this->defineHtmlFields($form, $group);
-                $this->defineMetadataFields($form, $group);
+                $form->section('Content', []);
+
+                foreach ($this->getFieldsInOrder($group) as $field) {
+                    if ($field['type'] === 'html') {
+                        $this->defineHtmlField($form, $field);
+                    } elseif ($field['type'] === 'image') {
+                        $this->defineImageField($form, $field);
+                    } else {
+                        $this->defineMetadataField($form, $field);
+                    }
+                }
+            });
+
+            $form->onSubmit(function (ContentGroup $contentGroup, array $input) {
+                $contentGroup->imageContentAreas->clear();
+                $contentGroup->htmlContentAreas->clear();
+                $contentGroup->metadata->clear();
+
+                foreach ($this->getFieldsInOrder($contentGroup) as $field) {
+                    if ($field['type'] === 'html') {
+                        $contentGroup->htmlContentAreas[] = new HtmlContentArea(
+                            $field['name'],
+                            $input['html_' . $field['name']]
+                        );
+                    } elseif ($field['type'] === 'image') {
+                        $contentGroup->imageContentAreas[] = new ImageContentArea(
+                            $field['name'],
+                            $input['image_' . $field['name']] ?? new Image(''),
+                            $input['image_alt_text_' . $field['name']]
+                        );
+                    } else {
+                        $contentGroup->metadata[] = new ContentMetadata(
+                            $field['name'],
+                            $input['metadata_' . $field['name']]
+                        );
+                    }
+                }
             });
 
             $form->onSubmit(function (ContentGroup $contentGroup) {
@@ -142,114 +173,68 @@ class ContentModule extends CrudModule
         });
     }
 
-    protected function defineImageFields(CrudFormDefinition $form, ContentGroup $group)
+    private function getFieldsInOrder(ContentGroup $group) : array
     {
-        if ($this->contentGroups[$group->name]['images'] ?? false) {
-            $field = $form->field(
-                Field::create('images', 'Images')
-                    ->arrayOf(Field::element()->form(
-                        Form::create()->section('Image', [
-                            Field::create('label', 'Name')->string()->readonly(),
-                            Field::create('name', 'name')->string()->hidden()->readonly(),
-                            Field::create('image', 'Image')
-                                ->image()
-                                ->moveToPathWithRandomFileName($this->config->getImageStorageBasePath(), 32),
-                            Field::create('alt_text', 'Alt Text')->string()->withEmptyStringAsNull(),
-                        ])->build()
-                    )->required())
-                    ->exactLength(count($this->contentGroups[$group->name]['images']))
-            )->bindToCallbacks(function (ContentGroup $group) : array {
-                $values = [];
+        $fieldsInOrder = [];
 
-                foreach ($this->contentGroups[$group->name]['images'] as $area) {
-                    $values[] = [
-                        'name'     => $area['name'],
-                        'label'    => $area['label'],
-                        'alt_text' => $group->hasImage($area['name']) ? $group->getImage($area['name'])->altText : '',
-                        'image'    => $group->hasImage($area['name']) ? $group->getImage($area['name'])->image : null,
-                    ];
-                }
+        foreach (['html_areas' => 'html', 'images' => 'image', 'metadata' => 'metadata'] as $option => $type) {
 
-                return $values;
-            }, function (ContentGroup $group, array $input) {
-                $group->imageContentAreas->clear();
-
-                foreach ($input as $image) {
-                    $group->imageContentAreas[] = new ImageContentArea($image['name'], $image['image'] ?? new Image(''), $image['alt_text']);
-                }
-            });
-
-            $form->section('Images', [$field]);
-        }
-    }
-
-    protected function defineHtmlFields(CrudFormDefinition $form, ContentGroup $group)
-    {
-        if ($this->contentGroups[$group->name]['html_areas'] ?? false) {
-            $field = $form->field(
-                Field::create('html_areas', 'Content')
-                    ->arrayOf(Field::element()->form(
-                        Form::create()->section('Content', [
-                            Field::create('label', 'Name')->string()->readonly(),
-                            Field::create('name', 'name')->string()->hidden()->readonly(),
-                            Field::create('html', 'Content')->html(),
-                        ])->build()
-                    )->required())
-                    ->exactLength(count($this->contentGroups[$group->name]['html_areas']))
-            )->bindToCallbacks(function (ContentGroup $group) : array {
-                $values = [];
-
-                foreach ($this->contentGroups[$group->name]['html_areas'] as $area) {
-                    $values[] = [
-                        'name'  => $area['name'],
-                        'label' => $area['label'],
-                        'html'  => $group->hasHtml($area['name']) ? $group->getHtml($area['name'])->html : null,
-                    ];
-                }
-
-                return $values;
-            }, function (ContentGroup $group, array $input) {
-                $group->htmlContentAreas->clear();
-
-                foreach ($input as $htmlArea) {
-                    $group->htmlContentAreas[] = new HtmlContentArea($htmlArea['name'], $htmlArea['html'] ?? new Html(''));
-                }
-            });
-
-            $form->section('Content', [$field]);
-        }
-    }
-
-    protected function defineMetadataFields(CrudFormDefinition $form, ContentGroup $group)
-    {
-        if ($this->contentGroups[$group->name]['metadata'] ?? false) {
-            $fields = [];
-
-            foreach ($this->contentGroups[$group->name]['metadata'] as $item) {
-                $fields[] = Field::create($item['name'], $item['label'])->string();
+            foreach ($this->contentGroups[$group->name][$option] ?? [] as $field) {
+                $fieldsInOrder[$field['order']] = $field + ['type' => $type];
             }
-
-            $field = $form->field(
-                Field::create('metadata', 'Metadata')
-                    ->form(Form::create()->section('', $fields)->build())
-                    ->required()
-            )->bindToCallbacks(function (ContentGroup $group) : array {
-                $values = [];
-
-                foreach ($this->contentGroups[$group->name]['metadata'] as $item) {
-                    $values[$item['name']] = $group->hasMetadata($item['name']) ? $group->getMetadata($item['name'])->value : null;
-                }
-
-                return $values;
-            }, function (ContentGroup $group, array $input) {
-                $group->metadata->clear();
-
-                foreach ($input as $key => $value) {
-                    $group->metadata[] = new ContentMetadata($key, $value ?? '');
-                }
-            });
-
-            $form->section('Metadata', [$field]);
         }
+
+        ksort($fieldsInOrder, SORT_NUMERIC);
+
+        return $fieldsInOrder;
+    }
+
+    protected function defineImageField(CrudFormDefinition $form, array $field)
+    {
+        $form->continueSection([
+            $form->field(
+                Field::create('image_' . $field['name'], $field['label'])
+                    ->image()
+                    ->moveToPathWithRandomFileName($this->config->getImageStorageBasePath(), 32)
+            )->bindToCallbacks(function (ContentGroup $group) use ($field) {
+                return $group->hasImage($field['name']) ? $group->getImage($field['name'])->image : null;
+            }, function (ContentGroup $group, array $input) {
+
+            }),
+            //
+            $form->field(
+                Field::create('image_alt_text_' . $field['name'], $field['label'] . ' - Alt Text')->string()->defaultTo('')
+            )->bindToCallbacks(function (ContentGroup $group) use ($field) {
+                return $group->hasImage($field['name']) ? $group->getImage($field['name'])->altText : '';
+            }, function (ContentGroup $group, $input) {
+
+            }),
+        ]);
+    }
+
+    protected function defineHtmlField(CrudFormDefinition $form, array $field)
+    {
+        $form->continueSection([
+            $form->field(
+                Field::create('html_' . $field['name'], $field['label'])->html()
+            )->bindToCallbacks(function (ContentGroup $group) use ($field) {
+                return $group->hasHtml($field['name']) ? $group->getHtml($field['name'])->html : '';
+            }, function (ContentGroup $group, $input) {
+
+            }),
+        ]);
+    }
+
+    protected function defineMetadataField(CrudFormDefinition $form, array $field)
+    {
+        $form->continueSection([
+            $form->field(
+                Field::create('metadata_' . $field['name'], $field['label'])->string()->defaultTo('')
+            )->bindToCallbacks(function (ContentGroup $group) use ($field) {
+                return $group->hasMetadata($field['name']) ? $group->getMetadata($field['name'])->value : '';
+            }, function (ContentGroup $group, $input) {
+
+            }),
+        ]);
     }
 }

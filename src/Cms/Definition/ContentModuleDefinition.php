@@ -87,9 +87,9 @@ class ContentModuleDefinition
             'images'     => [],
             'html_areas' => [],
             'metadata'   => [
-                ['name' => 'title', 'label' => 'Title'],
-                ['name' => 'description', 'label' => 'Description'],
-                ['name' => 'keywords', 'label' => 'Keywords'],
+                ['name' => 'title', 'label' => 'Title', 'order' => 1000],
+                ['name' => 'description', 'label' => 'Description', 'order' => 1001],
+                ['name' => 'keywords', 'label' => 'Keywords', 'order' => 1002],
             ],
         ];
 
@@ -112,7 +112,7 @@ class ContentModuleDefinition
             'images'     => [],
             'html_areas' => [],
             'metadata'   => [
-                ['name' => 'subject', 'label' => 'Subject'],
+                ['name' => 'subject', 'label' => 'Subject', 'order' => 1000],
             ],
         ];
 

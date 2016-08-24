@@ -198,7 +198,7 @@ class ContentModule extends CrudModule
                     ->moveToPathWithRandomFileName($this->config->getImageStorageBasePath(), 32)
             )->bindToCallbacks(function (ContentGroup $group) use ($field) {
                 return $group->hasImage($field['name']) ? $group->getImage($field['name'])->image : null;
-            }, function (ContentGroup $group, array $input) {
+            }, function (ContentGroup $group) {
 
             }),
             //
@@ -206,7 +206,7 @@ class ContentModule extends CrudModule
                 Field::create('image_alt_text_' . $field['name'], $field['label'] . ' - Alt Text')->string()->defaultTo('')
             )->bindToCallbacks(function (ContentGroup $group) use ($field) {
                 return $group->hasImage($field['name']) ? $group->getImage($field['name'])->altText : '';
-            }, function (ContentGroup $group, $input) {
+            }, function (ContentGroup $group) {
 
             }),
         ]);
@@ -219,7 +219,7 @@ class ContentModule extends CrudModule
                 Field::create('html_' . $field['name'], $field['label'])->html()
             )->bindToCallbacks(function (ContentGroup $group) use ($field) {
                 return $group->hasHtml($field['name']) ? $group->getHtml($field['name'])->html : '';
-            }, function (ContentGroup $group, $input) {
+            }, function (ContentGroup $group) {
 
             }),
         ]);
@@ -232,7 +232,7 @@ class ContentModule extends CrudModule
                 Field::create('metadata_' . $field['name'], $field['label'])->string()->defaultTo('')
             )->bindToCallbacks(function (ContentGroup $group) use ($field) {
                 return $group->hasMetadata($field['name']) ? $group->getMetadata($field['name'])->value : '';
-            }, function (ContentGroup $group, $input) {
+            }, function (ContentGroup $group) {
 
             }),
         ]);

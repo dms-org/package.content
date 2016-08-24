@@ -131,18 +131,18 @@ class ContentModule extends CrudModule
                 $contentGroup->metadata->clear();
 
                 foreach ($this->getFieldsInOrder($contentGroup) as $field) {
-                    if ($field['type'] === 'html') {
+                    if ($field['type'] === 'html' && !empty($input['html_' . $field['name']])) {
                         $contentGroup->htmlContentAreas[] = new HtmlContentArea(
                             $field['name'],
                             $input['html_' . $field['name']]
                         );
-                    } elseif ($field['type'] === 'image') {
+                    } elseif ($field['type'] === 'image' && !empty($input['image_' . $field['name']])) {
                         $contentGroup->imageContentAreas[] = new ImageContentArea(
                             $field['name'],
                             $input['image_' . $field['name']] ?? new Image(''),
                             $input['image_alt_text_' . $field['name']]
                         );
-                    } else {
+                    } elseif (!empty($input['metadata_' . $field['name']])) {
                         $contentGroup->metadata[] = new ContentMetadata(
                             $field['name'],
                             $input['metadata_' . $field['name']]

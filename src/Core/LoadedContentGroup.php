@@ -3,6 +3,7 @@
 namespace Dms\Package\Content\Core;
 
 use Dms\Common\Structure\FileSystem\PathHelper;
+use Dms\Core\File\IImage;
 
 /**
  * The loaded content group class.
@@ -94,7 +95,7 @@ class LoadedContentGroup
 
         if ($contentArea) {
             $imagePath = PathHelper::normalize($this->config->getImageStorageBasePath());
-            
+
             return rtrim($this->config->getImageBaseUrl(), '/') . '/' . ltrim(strtr($contentArea->image->getFullPath(), [$imagePath => '', '\\' => '/']), '/');
         }
 
@@ -112,6 +113,22 @@ class LoadedContentGroup
         $contentArea = $this->content->getImage($name);
 
         return ($contentArea ? $contentArea->altText : null) ?? $default;
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return IImage|null
+     */
+    public function getImage(string $name)
+    {
+        $contentArea = $this->content->getImage($name);
+
+        if ($contentArea) {
+            return $contentArea->image;
+        }
+
+        return null;
     }
 
     /**

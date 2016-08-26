@@ -65,6 +65,7 @@ class ContentLoaderServiceTest extends CmsTestCase
         $this->assertSame('<strong>ABC</strong>', $group->getHtml('html-area-1'));
         $this->assertSame('<small>123</small>', $group->getHtml('html-area-2'));
         $this->assertSame('', $group->getImageUrl('image-area-1'));
+        $this->assertSame(null, $group->getImage('image-area-1'));
         $this->assertSame('', $group->getImageAltText('image-area-1'));
         $this->assertSame('/some/url/image.gif', $group->getImageUrl('image-area-2'));
         $this->assertSame('val', $group->getMetadata('key'));

@@ -50,8 +50,8 @@ class ContentGroupMapper extends EntityMapper
 
         $map->idToPrimaryKey('id');
 
-        $map->property(ContentGroup::NAMESPACE)->to('namespace')->asVarchar(25);
-        $map->property(ContentGroup::NAME)->to('name')->asVarchar(25);
+        $map->property(ContentGroup::NAMESPACE)->to('namespace')->asVarchar(255);
+        $map->property(ContentGroup::NAME)->to('name')->asVarchar(255);
 
         $map->unique('content_group_name_unique_index')
             ->on(['namespace', 'name']);

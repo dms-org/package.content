@@ -5,11 +5,13 @@ namespace Dms\Package\Content\Cms;
 use Dms\Common\Structure\DateTime\DateTime;
 use Dms\Common\Structure\Field;
 use Dms\Common\Structure\FileSystem\Image;
+use Dms\Common\Structure\Web\Html;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Common\Crud\CrudModule;
 use Dms\Core\Common\Crud\Definition\CrudModuleDefinition;
 use Dms\Core\Common\Crud\Definition\Form\CrudFormDefinition;
 use Dms\Core\Common\Crud\Definition\Table\SummaryTableDefinition;
+use Dms\Core\Form\Builder\Form;
 use Dms\Core\Util\IClock;
 use Dms\Package\Content\Cms\Definition\ContentGroupDefinition;
 use Dms\Package\Content\Core\ContentConfig;
@@ -116,49 +118,23 @@ class ContentModule extends CrudModule
             $form->dependentOnObject(function (CrudFormDefinition $form, ContentGroup $group) {
                 $form->section('Content', []);
 
-                foreach ($this->getFieldsInOrder($group) as $field) {
+                foreach ($this->getFieldsInOrder($this->contentGroups[$group->name]) as $field) {
                     if ($field['type'] === 'html') {
                         $this->defineHtmlField($form, $field);
                     } elseif ($field['type'] === 'image') {
                         $this->defineImageField($form, $field);
                     } elseif ($field['type'] === 'text') {
                         $this->defineTextField($form, $field);
-                    } else {
+                    } elseif ($field['type'] === 'metadata') {
                         $this->defineMetadataField($form, $field);
+                    } else {
+                        $this->defineArrayField($form, $field);
                     }
                 }
             });
 
             $form->onSubmit(function (ContentGroup $contentGroup, array $input) {
-                $contentGroup->imageContentAreas->clear();
-                $contentGroup->htmlContentAreas->clear();
-                $contentGroup->textContentAreas->clear();
-                $contentGroup->metadata->clear();
-
-                foreach ($this->getFieldsInOrder($contentGroup) as $field) {
-                    if ($field['type'] === 'html' && !empty($input['html_' . $field['name']])) {
-                        $contentGroup->htmlContentAreas[] = new HtmlContentArea(
-                            $field['name'],
-                            $input['html_' . $field['name']]
-                        );
-                    } elseif ($field['type'] === 'image' && !empty($input['image_' . $field['name']])) {
-                        $contentGroup->imageContentAreas[] = new ImageContentArea(
-                            $field['name'],
-                            $input['image_' . $field['name']] ?? new Image(''),
-                            $input['image_alt_text_' . $field['name']] ?? ''
-                        );
-                    } elseif (!empty($input['text_' . $field['name']])) {
-                        $contentGroup->textContentAreas[] = new TextContentArea(
-                            $field['name'],
-                            $input['text_' . $field['name']]
-                        );
-                    } elseif (!empty($input['metadata_' . $field['name']])) {
-                        $contentGroup->metadata[] = new ContentMetadata(
-                            $field['name'],
-                            $input['metadata_' . $field['name']]
-                        );
-                    }
-                }
+                $this->updateContentGroup($contentGroup, $this->contentGroups[$contentGroup->name], $input);
             });
 
             $form->onSubmit(function (ContentGroup $contentGroup) {
@@ -183,24 +159,83 @@ class ContentModule extends CrudModule
         });
     }
 
-    private function getFieldsInOrder(ContentGroup $group) : array
+    protected function updateContentGroup(ContentGroup $contentGroup, ContentGroupDefinition $groupDefinition, array $input)
+    {
+        $contentGroup->imageContentAreas->clear();
+        $contentGroup->htmlContentAreas->clear();
+        $contentGroup->textContentAreas->clear();
+        $contentGroup->metadata->clear();
+        $contentGroup->nestedArrayContentGroups->clear();
+
+        foreach ($this->getFieldsInOrder($groupDefinition) as $field) {
+            if ($field['type'] === 'html' && !empty($input['html_' . $field['name']])) {
+
+                $contentGroup->htmlContentAreas[] = new HtmlContentArea(
+                    $field['name'],
+                    $input['html_' . $field['name']]
+                );
+
+            } elseif ($field['type'] === 'image' && !empty($input['image_' . $field['name']])) {
+
+                $contentGroup->imageContentAreas[] = new ImageContentArea(
+                    $field['name'],
+                    $input['image_' . $field['name']] ?? new Image(''),
+                    $input['image_alt_text_' . $field['name']] ?? ''
+                );
+
+            } elseif ($field['type'] === 'text' && !empty($input['text_' . $field['name']])) {
+
+                $contentGroup->textContentAreas[] = new TextContentArea(
+                    $field['name'],
+                    $input['text_' . $field['name']]
+                );
+
+            } elseif ($field['type'] === 'metadata' && !empty($input['metadata_' . $field['name']])) {
+
+                $contentGroup->metadata[] = new ContentMetadata(
+                    $field['name'],
+                    $input['metadata_' . $field['name']]
+                );
+
+            } elseif ($field['type'] === 'array' && !empty($input['array_' . $field['name']])) {
+
+                foreach ((array)$input['array_' . $field['name']] as $element) {
+                    $innerContentGroup = new ContentGroup(
+                        '__element__',
+                        $field['name'],
+                        $this->clock
+                    );
+
+                    $this->updateContentGroup($innerContentGroup, $field['definition'], $element);
+
+                    $contentGroup->nestedArrayContentGroups[] = $innerContentGroup;
+                }
+            }
+        }
+    }
+
+    private function getFieldsInOrder(ContentGroupDefinition $groupDefinition) : array
     {
         $fieldsInOrder = [];
 
-        foreach ($this->contentGroups[$group->name]->htmlAreas as $field) {
+        foreach ($groupDefinition->htmlAreas as $field) {
             $fieldsInOrder[$field['order']] = $field + ['type' => 'html'];
         }
 
-        foreach ($this->contentGroups[$group->name]->images as $field) {
+        foreach ($groupDefinition->images as $field) {
             $fieldsInOrder[$field['order']] = $field + ['type' => 'image'];
         }
 
-        foreach ($this->contentGroups[$group->name]->textAreas as $field) {
+        foreach ($groupDefinition->textAreas as $field) {
             $fieldsInOrder[$field['order']] = $field + ['type' => 'text'];
         }
 
-        foreach ($this->contentGroups[$group->name]->metadata as $field) {
+        foreach ($groupDefinition->metadata as $field) {
             $fieldsInOrder[$field['order']] = $field + ['type' => 'metadata'];
+        }
+
+        foreach ($groupDefinition->nestedArrayContentGroups as $field) {
+            $fieldsInOrder[$field['order']] = $field + ['type' => 'array'];
         }
 
         ksort($fieldsInOrder, SORT_NUMERIC);
@@ -212,9 +247,7 @@ class ContentModule extends CrudModule
     {
         $fields = [
             $form->field(
-                Field::create('image_' . $field['name'], $field['label'])
-                    ->image()
-                    ->moveToPathWithRandomFileName($this->config->getImageStorageBasePath(), 32)
+                $this->buildImageUploadField($field)
             )->bindToCallbacks(function (ContentGroup $group) use ($field) {
                 return $group->hasImage($field['name']) ? $group->getImage($field['name'])->image : null;
             }, function (ContentGroup $group) {
@@ -224,7 +257,7 @@ class ContentModule extends CrudModule
 
         if (!empty($field['alt_text'])) {
             $fields[] = $form->field(
-                Field::create('image_alt_text_' . $field['name'], $field['label'] . ' - Alt Text')->string()->defaultTo('')
+                $this->buildImageAltTextField($field)
             )->bindToCallbacks(function (ContentGroup $group) use ($field) {
                 return $group->hasImage($field['name']) ? $group->getImage($field['name'])->altText : '';
             }, function (ContentGroup $group) {
@@ -235,11 +268,23 @@ class ContentModule extends CrudModule
         $form->continueSection($fields);
     }
 
+    protected function buildImageUploadField(array $field)
+    {
+        return Field::create('image_' . $field['name'], $field['label'])
+            ->image()
+            ->moveToPathWithRandomFileName($this->config->getImageStorageBasePath(), 32);
+    }
+
+    protected function buildImageAltTextField(array $field)
+    {
+        return Field::create('image_alt_text_' . $field['name'], $field['label'] . ' - Alt Text')->string()->defaultTo('');
+    }
+
     protected function defineHtmlField(CrudFormDefinition $form, array $field)
     {
         $form->continueSection([
             $form->field(
-                Field::create('html_' . $field['name'], $field['label'])->html()
+                $this->buildHtmlField($field)
             )->bindToCallbacks(function (ContentGroup $group) use ($field) {
                 return $group->hasHtml($field['name']) ? $group->getHtml($field['name'])->html : '';
             }, function (ContentGroup $group) {
@@ -248,11 +293,16 @@ class ContentModule extends CrudModule
         ]);
     }
 
+    protected function buildHtmlField(array $field)
+    {
+        return Field::create('html_' . $field['name'], $field['label'])->html();
+    }
+
     protected function defineTextField(CrudFormDefinition $form, array $field)
     {
         $form->continueSection([
             $form->field(
-                Field::create('text_' . $field['name'], $field['label'])->string()->defaultTo('')
+                $this->buildTextField($field)
             )->bindToCallbacks(function (ContentGroup $group) use ($field) {
                 return $group->hasText($field['name']) ? $group->getText($field['name'])->text : '';
             }, function (ContentGroup $group) {
@@ -261,16 +311,117 @@ class ContentModule extends CrudModule
         ]);
     }
 
+    protected function buildTextField(array $field)
+    {
+        return Field::create('text_' . $field['name'], $field['label'])->string()->defaultTo('');
+    }
+
     protected function defineMetadataField(CrudFormDefinition $form, array $field)
     {
         $form->continueSection([
             $form->field(
-                Field::create('metadata_' . $field['name'], $field['label'])->string()->defaultTo('')
+                $this->buildMetadataField($field)
             )->bindToCallbacks(function (ContentGroup $group) use ($field) {
                 return $group->hasMetadata($field['name']) ? $group->getMetadata($field['name'])->value : '';
             }, function (ContentGroup $group) {
 
             }),
         ]);
+    }
+
+    protected function buildMetadataField(array $field)
+    {
+        return Field::create('metadata_' . $field['name'], $field['label'])->string()->defaultTo('');
+    }
+
+    protected function defineArrayField(CrudFormDefinition $form, array $field)
+    {
+        $form->continueSection([
+            $form->field(
+                $this->buildArrayField($field)
+            )->bindToCallbacks(function (ContentGroup $group) use ($field) {
+                return ContentGroup::collection($group->getArrayOf($field['name']))
+                    ->select(function (ContentGroup $contentGroup) use ($field) {
+                        return $this->transformContentGroupToValues($contentGroup, $field['definition']);
+                    })
+                    ->asArray();
+            }, function (ContentGroup $group) {
+
+            }),
+        ]);
+    }
+
+    protected function transformContentGroupToValues(ContentGroup $group, ContentGroupDefinition $groupDefinition)
+    {
+        $values = [];
+
+        foreach ($this->getFieldsInOrder($groupDefinition) as $field) {
+            if ($field['type'] === 'html') {
+
+                $values['html_' . $field['name']] = $group->hasHtml($field['name']) ? $group->getHtml($field['name']) : new Html('');
+
+            } elseif ($field['type'] === 'image') {
+
+                $values['image_' . $field['name']] = $group->hasImage($field['name']) ? $group->getImage($field['name'])->image : null;
+
+                if (!empty($field['alt_text'])) {
+                    $values['image_alt_text_' . $field['name']] = $group->hasImage($field['name']) ? $group->getImage($field['name'])->altText : null;
+                }
+
+            } elseif ($field['type'] === 'text') {
+
+                $values['text_' . $field['name']] = $group->hasText($field['name']) ? $group->getText($field['name'])->text : '';
+
+            } elseif ($field['type'] === 'metadata') {
+
+                $values['metadata_' . $field['name']] = $group->hasMetadata($field['name']) ? $group->getMetadata($field['name'])->value : '';
+
+            } elseif ($field['type'] === 'array') {
+
+                $values['array_' . $field['name']] = [];
+
+                foreach ($group->getArrayOf($field['name']) as $element) {
+                    $values['array_' . $field['name']][] = $this->transformContentGroupToValues($element, $field['definition']);
+                }
+            }
+        }
+
+        return $values;
+    }
+
+    protected function buildArrayField(array $field)
+    {
+        return Field::create('array_' . $field['name'], $field['label'])
+            ->arrayOf(
+                Field::element()->form(
+                    Form::create()->section($field['label'], $this->buildNestedArrayElementFields($field['definition']))->build()
+                )
+            );
+    }
+
+    protected function buildNestedArrayElementFields(ContentGroupDefinition $groupDefinition)
+    {
+        $fields = [];
+
+        foreach ($this->getFieldsInOrder($groupDefinition) as $field) {
+            if ($field['type'] === 'html') {
+                $fields[] = $this->buildHtmlField($field);
+            } elseif ($field['type'] === 'image') {
+                $fields[] = $this->buildImageUploadField($field);
+
+                if (!empty($field['alt_text'])) {
+                    $fields[] = $this->buildImageAltTextField($field);
+                }
+
+            } elseif ($field['type'] === 'text') {
+                $fields[] = $this->buildTextField($field);
+            } elseif ($field['type'] === 'metadata') {
+                $fields[] = $this->buildMetadataField($field);
+            } else {
+                $fields[] = $this->buildArrayField($field);
+            }
+        }
+
+        return $fields;
     }
 }

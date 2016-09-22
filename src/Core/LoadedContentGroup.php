@@ -178,6 +178,32 @@ class LoadedContentGroup
     }
 
     /**
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function hasArrayOf(string $name) : bool
+    {
+        return $this->content->hasArrayOf($name);
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return LoadedContentGroup[]
+     */
+    public function getArrayOf(string $name) : array
+    {
+        $array = $this->content->hasArrayOf($name) ? $this->content->getArrayOf($name) : [];
+
+        foreach ($array as $key => $contentGroup) {
+            $array[$key] = new self($this->config, $contentGroup);
+        }
+
+        return $array;
+    }
+
+    /**
      * @return string
      */
     public function renderMetadataAsHtml() : string

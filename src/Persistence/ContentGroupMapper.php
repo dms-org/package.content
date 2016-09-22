@@ -51,11 +51,9 @@ class ContentGroupMapper extends EntityMapper
 
         $map->idToPrimaryKey('id');
 
+        $map->column('parent_id')->nullable()->asUnsignedInt();
         $map->property(ContentGroup::NAMESPACE)->to('namespace')->asVarchar(255);
         $map->property(ContentGroup::NAME)->to('name')->asVarchar(255);
-
-        $map->unique('content_group_name_unique_index')
-            ->on(['namespace', 'name']);
 
         $map->embeddedCollection(ContentGroup::HTML_CONTENT_AREAS)
             ->toTable('content_group_html_areas')
@@ -120,6 +118,12 @@ class ContentGroupMapper extends EntityMapper
                 $map->unique('content_group_metadata_unique_index')
                     ->on(['content_group_id', 'name']);
             });
+
+        $map->relation(ContentGroup::NESTED_ARRAY_CONTENT_GROUPS)
+            ->using($this)
+            ->toMany()
+            ->identifying()
+            ->withParentIdAs('parent_id');
 
         $map->embedded(ContentGroup::UPDATED_AT)
             ->using(new DateTimeMapper('updated_at'));

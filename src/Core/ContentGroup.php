@@ -3,6 +3,7 @@
 namespace Dms\Package\Content\Core;
 
 use Dms\Common\Structure\DateTime\DateTime;
+use Dms\Core\Model\EntityCollection;
 use Dms\Core\Model\Object\ClassDefinition;
 use Dms\Core\Model\Object\Entity;
 use Dms\Core\Model\ValueObjectCollection;
@@ -21,6 +22,7 @@ class ContentGroup extends Entity
     const IMAGE_CONTENT_AREAS = 'imageContentAreas';
     const TEXT_CONTENT_AREAS = 'textContentAreas';
     const METADATA = 'metadata';
+    const NESTED_ARRAY_CONTENT_GROUPS = 'nestedArrayContentGroups';
     const UPDATED_AT = 'updatedAt';
 
     /**
@@ -54,6 +56,11 @@ class ContentGroup extends Entity
     public $metadata;
 
     /**
+     * @var EntityCollection|ContentGroup[]
+     */
+    public $nestedArrayContentGroups;
+
+    /**
      * @var DateTime
      */
     public $updatedAt;
@@ -69,13 +76,14 @@ class ContentGroup extends Entity
     {
         parent::__construct();
 
-        $this->namespace         = $namespace;
-        $this->name              = $name;
-        $this->htmlContentAreas  = HtmlContentArea::collection();
-        $this->imageContentAreas = ImageContentArea::collection();
-        $this->textContentAreas  = TextContentArea::collection();
-        $this->metadata          = ContentMetadata::collection();
-        $this->updatedAt         = new DateTime($clock->utcNow());
+        $this->namespace                = $namespace;
+        $this->name                     = $name;
+        $this->htmlContentAreas         = HtmlContentArea::collection();
+        $this->imageContentAreas        = ImageContentArea::collection();
+        $this->textContentAreas         = TextContentArea::collection();
+        $this->metadata                 = ContentMetadata::collection();
+        $this->nestedArrayContentGroups = ContentGroup::collection();
+        $this->updatedAt                = new DateTime($clock->utcNow());
     }
 
     /**
@@ -94,8 +102,10 @@ class ContentGroup extends Entity
         $class->property($this->imageContentAreas)->asType(ImageContentArea::collectionType());
 
         $class->property($this->textContentAreas)->asType(TextContentArea::collectionType());
-        
+
         $class->property($this->metadata)->asType(ContentMetadata::collectionType());
+
+        $class->property($this->nestedArrayContentGroups)->asType(ContentGroup::collectionType());
 
         $class->property($this->updatedAt)->asObject(DateTime::class);
     }
@@ -164,6 +174,18 @@ class ContentGroup extends Entity
     /**
      * @param string $name
      *
+     * @return ContentMetadata|null
+     */
+    public function getMetadata(string $name)
+    {
+        return $this->metadata->where(function (ContentMetadata $metadata) use ($name) {
+            return $metadata->name === $name;
+        })->first();
+    }
+
+    /**
+     * @param string $name
+     *
      * @return TextContentArea|null
      */
     public function getText(string $name)
@@ -188,13 +210,43 @@ class ContentGroup extends Entity
     /**
      * @param string $name
      *
-     * @return ContentMetadata|null
+     * @return ContentGroup[]
      */
-    public function getMetadata(string $name)
+    public function getArrayOf(string $name) : array
     {
-        return $this->metadata->where(function (ContentMetadata $metadata) use ($name) {
-            return $metadata->name === $name;
-        })->first();
+        return $this->nestedArrayContentGroups
+            ->where(function (ContentGroup $contentArea) use ($name) {
+                return $contentArea->name === $name;
+            })
+            ->asArray();
     }
 
+    /**
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function hasArrayOf(string $name) : bool
+    {
+        return $this->nestedArrayContentGroups
+            ->where(function (ContentGroup $contentArea) use ($name) {
+                return $contentArea->name === $name;
+            })
+            ->count() > 0;
+    }
+
+    /**
+     * @return ContentGroup[][]
+     */
+    public function getAllArrayGroups() : array
+    {
+        return $this->nestedArrayContentGroups
+            ->groupBy(function (ContentGroup $contentArea) {
+                return $contentArea->name;
+            })
+            ->select(function ($contentGroups) {
+                return $contentGroups->asArray();
+            })
+            ->asArray();
+    }
 }

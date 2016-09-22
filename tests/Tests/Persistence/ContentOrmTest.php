@@ -6,7 +6,6 @@ use Dms\Common\Structure\FileSystem\Image;
 use Dms\Common\Structure\Web\Html;
 use Dms\Core\Ioc\IIocContainer;
 use Dms\Core\Persistence\Db\Mapping\IOrm;
-use Dms\Core\Tests\Helpers\Mock\MockingIocContainer;
 use Dms\Core\Tests\Persistence\Db\Integration\Mapping\DbIntegrationTest;
 use Dms\Core\Util\IClock;
 use Dms\Package\Content\Core\ContentConfig;
@@ -77,10 +76,10 @@ class ContentOrmTest extends DbIntegrationTest
         $this->repo->save($contentGroup);
 
         $this->assertDatabaseDataSameAs([
-            'content_groups'           => [
-                ['id' => 1, 'namespace' => 'namespace', 'name' => 'name', 'updated_at' => '2000-01-01 00:00:11'],
+            'content_groups'            => [
+                ['id' => 1, 'parent_id' => null, 'namespace' => 'namespace', 'name' => 'name', 'updated_at' => '2000-01-01 00:00:11'],
             ],
-            'content_group_html_areas' => [
+            'content_group_html_areas'  => [
                 ['id' => 1, 'content_group_id' => 1, 'name' => 'html-area-1', 'html' => '<strong>ABC</strong>'],
                 ['id' => 2, 'content_group_id' => 1, 'name' => 'html-area-2', 'html' => '<small>123</small>'],
             ],
@@ -88,17 +87,54 @@ class ContentOrmTest extends DbIntegrationTest
                 ['id' => 1, 'content_group_id' => 1, 'name' => 'image-area-1', 'image_path' => basename(__FILE__), 'client_file_name' => null, 'alt_text' => null],
                 ['id' => 2, 'content_group_id' => 1, 'name' => 'image-area-2', 'image_path' => basename(__FILE__), 'client_file_name' => 'client-name.png', 'alt_text' => 'alt-text'],
             ],
-            'content_group_text_areas' => [
+            'content_group_text_areas'  => [
                 ['id' => 1, 'content_group_id' => 1, 'name' => 'text-area-1', 'text' => 'ABC'],
                 ['id' => 2, 'content_group_id' => 1, 'name' => 'text-area-2', 'text' => '123'],
             ],
-            'content_group_metadata' => [
+            'content_group_metadata'    => [
                 ['id' => 1, 'content_group_id' => 1, 'name' => 'key', 'value' => 'val'],
                 ['id' => 2, 'content_group_id' => 1, 'name' => 'title', 'value' => 'Some Title'],
             ],
         ]);
 
         $contentGroup->setId(1);
+
+        $this->assertEquals($contentGroup, $this->repo->get(1));
+    }
+
+    public function testNestedContentGroups()
+    {
+        $contentGroup  = new ContentGroup(
+            'namespace', 'name', $this->mockClock(new \DateTimeImmutable('2000-01-01 00:00:11'))
+        );
+        $contentGroup1 = new ContentGroup(
+            '__element__', 'name', $this->mockClock(new \DateTimeImmutable('2000-01-01 00:00:11'))
+        );
+        $contentGroup2 = new ContentGroup(
+            '__element__', 'name', $this->mockClock(new \DateTimeImmutable('2000-01-01 00:00:11'))
+        );
+
+
+        $contentGroup1->nestedArrayContentGroups[] = $contentGroup2;
+        $contentGroup->nestedArrayContentGroups[]  = $contentGroup1;
+
+        $this->repo->save($contentGroup);
+
+        $this->assertDatabaseDataSameAs([
+            'content_groups'            => [
+                ['id' => 1, 'parent_id' => null, 'namespace' => 'namespace', 'name' => 'name', 'updated_at' => '2000-01-01 00:00:11'],
+                ['id' => 2, 'parent_id' => 1, 'namespace' => '__element__', 'name' => 'name', 'updated_at' => '2000-01-01 00:00:11'],
+                ['id' => 3, 'parent_id' => 2, 'namespace' => '__element__', 'name' => 'name', 'updated_at' => '2000-01-01 00:00:11'],
+            ],
+            'content_group_html_areas'  => [],
+            'content_group_image_areas' => [],
+            'content_group_metadata'    => [],
+            'content_group_text_areas'  => [],
+        ]);
+
+        $contentGroup->setId(1);
+        $contentGroup1->setId(2);
+        $contentGroup2->setId(3);
 
         $this->assertEquals($contentGroup, $this->repo->get(1));
     }

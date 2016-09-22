@@ -155,7 +155,12 @@ abstract class ContentPackage extends Package
         $contentGroupsToCreate   = [];
         $contentGroupsToSync     = [];
 
-        foreach ($contentGroupRepository->getAll() as $contentGroup) {
+        $parentContentGroups = $contentGroupRepository->matching(
+            $contentGroupRepository->criteria()
+                ->where(ContentGroup::NAMESPACE, '!=', '__element__')
+        );
+
+        foreach ($parentContentGroups as $contentGroup) {
             $namespacedContentGroups[$contentGroup->namespace][$contentGroup->name] = $contentGroup;
         }
 
@@ -219,7 +224,7 @@ abstract class ContentPackage extends Package
     }
 
     /**
-     * @param ContentGroup             $contentGroup
+     * @param ContentGroup           $contentGroup
      * @param ContentGroupDefinition $contentGroupSchema
      *
      * @return ContentGroup
@@ -275,6 +280,13 @@ abstract class ContentPackage extends Package
         foreach (array_diff_key($validMetadataOptions, $metadataNames) as $name => $unusedVariable) {
             $contentGroup->metadata[] = new ContentMetadata($name, '');
         }
+
+        $validArrayOptions = array_fill_keys(array_column($contentGroupSchema->nestedArrayContentGroups, 'name'), true);
+        $contentGroup
+            ->nestedArrayContentGroups
+            ->removeWhere(function (ContentGroup $group) use ($validArrayOptions) {
+                return !isset($validArrayOptions[$group->name]);
+            });
 
         return $contentGroup;
     }

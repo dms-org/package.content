@@ -68,6 +68,8 @@ class ContentGroupDefiner
     }
 
     /**
+     * Defines a HTML field.
+     *
      * @param string $name
      * @param string $label
      * @param string $containerElementCssSelector
@@ -87,6 +89,8 @@ class ContentGroupDefiner
     }
 
     /**
+     * Defines a text field.
+     *
      * @param string $name
      * @param string $label
      *
@@ -100,6 +104,8 @@ class ContentGroupDefiner
     }
 
     /**
+     * Defines a metadata field.
+     *
      * @param string $name
      * @param string $label
      *
@@ -108,6 +114,37 @@ class ContentGroupDefiner
     public function withMetadata(string $name, string $label)
     {
         $this->contentGroup->metadata[$name] = ['name' => $name, 'label' => $label, 'order' => $this->order++];
+
+        return $this;
+    }
+
+    /**
+     * Defines an array field.
+     *
+     * Example:
+     * <code>
+     * ->withArrayOf(function ('some-slider', 'Multiple Images', function (ContentGroupDefiner $group) {
+     *    $group->withImage(...);
+     * })
+     * </code>
+     *
+     * @param string   $name
+     * @param string   $label
+     * @param callable $elementContentDefinitionCallback
+     *
+     * @return static
+     */
+    public function withArrayOf(string $name, string $label, callable $elementContentDefinitionCallback)
+    {
+        $definition = new ContentGroupDefinition('__element__', $name);
+        $elementContentDefinitionCallback(new self($definition));
+
+        $this->contentGroup->nestedArrayContentGroups[$name] = [
+            'name'       => $name,
+            'label'      => $label,
+            'order'      => $this->order++,
+            'definition' => $definition,
+        ];
 
         return $this;
     }

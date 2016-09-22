@@ -31,6 +31,8 @@ class ContentOrm extends Orm
      */
     protected function define(OrmDefinition $orm)
     {
+        $orm->enableLazyLoading();
+
         $orm->entities([
             ContentGroup::class => ContentGroupMapper::class,
         ]);

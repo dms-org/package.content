@@ -38,6 +38,11 @@ class ContentGroupDefinition
     public $metadata = [];
 
     /**
+     * @var ContentGroupDefinition[]
+     */
+    public $nestedArrayContentGroups = [];
+
+    /**
      * @var callable|null
      */
     public $previewCallback;

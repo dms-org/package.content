@@ -8,6 +8,7 @@ use Dms\Common\Testing\CmsTestCase;
 use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Persistence\ArrayRepository;
 use Dms\Core\Util\DateTimeClock;
+use Dms\Library\Testing\Mock\MockClock;
 use Dms\Package\Content\Core\ContentConfig;
 use Dms\Package\Content\Core\ContentGroup;
 use Dms\Package\Content\Core\ContentLoaderService;
@@ -51,6 +52,9 @@ class ContentLoaderServiceTest extends CmsTestCase
         $contentGroup->metadata[] = new ContentMetadata('key', 'val');
         $contentGroup->metadata[] = new ContentMetadata('title', 'Some Title');
 
+        $contentGroup->nestedArrayContentGroups[] = new ContentGroup('__element__', 'item', new MockClock('2000-01-01 00:00:00'));
+        $contentGroup->nestedArrayContentGroups[] = new ContentGroup('__element__', 'item', new MockClock('2000-01-01 00:00:00'));
+
         $contentGroups = [$contentGroup];
 
         return new class(ContentGroup::collection($contentGroups)) extends ArrayRepository implements IContentGroupRepository
@@ -78,6 +82,12 @@ class ContentLoaderServiceTest extends CmsTestCase
         $this->assertSame('val', $group->getMetadata('key'));
         $this->assertSame('Some Title', $group->getMetadata('title'));
         $this->assertSame('<meta name="key" content="val" />' . PHP_EOL . '<title>Some Title</title>', $group->renderMetadataAsHtml());
+        $this->assertSame(true, $group->hasArrayOf('item'));
+        $this->assertEquals([
+            new LoadedContentGroup($group->getConfig(), new ContentGroup('__element__', 'item', new MockClock('2000-01-01 00:00:00'))),
+            new LoadedContentGroup($group->getConfig(), new ContentGroup('__element__', 'item', new MockClock('2000-01-01 00:00:00'))),
+        ], $group->getArrayOf('item'));
+        $this->assertSame([], $group->getArrayOf('non-existent'));
     }
 
     public function testLoadNonExistent()
@@ -90,6 +100,8 @@ class ContentLoaderServiceTest extends CmsTestCase
         $this->assertSame(0, $group->getContentGroup()->htmlContentAreas->count());
         $this->assertSame(0, $group->getContentGroup()->imageContentAreas->count());
         $this->assertSame(0, $group->getContentGroup()->metadata->count());
+        $this->assertSame(0, $group->getContentGroup()->textContentAreas->count());
+        $this->assertSame(0, $group->getContentGroup()->nestedArrayContentGroups->count());
     }
 
     public function testDefaults()
@@ -100,6 +112,7 @@ class ContentLoaderServiceTest extends CmsTestCase
         $this->assertSame('default', $group->getHtml('invalid', 'default'));
         $this->assertSame('default', $group->getMetadata('invalid', 'default'));
         $this->assertSame('default', $group->getImageUrl('invalid', 'default'));
+        $this->assertSame('default', $group->getText('invalid', 'default'));
         $this->assertSame('default', $group->getImageAltText('invalid', 'default'));
     }
 

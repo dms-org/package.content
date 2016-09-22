@@ -18,6 +18,7 @@ use Dms\Core\Util\IClock;
 use Dms\Package\Content\Cms\ContentModule;
 use Dms\Package\Content\Cms\ContentPackage;
 use Dms\Package\Content\Cms\Definition\ContentConfigDefinition;
+use Dms\Package\Content\Cms\Definition\ContentGroupDefiner;
 use Dms\Package\Content\Cms\Definition\ContentModuleDefinition;
 use Dms\Package\Content\Cms\Definition\ContentPackageDefinition;
 use Dms\Package\Content\Core\ContentGroup;
@@ -106,6 +107,15 @@ class ContentPackageTest extends CmsTestCase
                         ->withHtml('info', 'Info', '#info')
                         ->withImageAndAltText('banner', 'Banner');
 
+                    $content->page('carousel', 'Carousel')
+                        ->withArrayOf('images', 'Images', function (ContentGroupDefiner $image) {
+                            $image
+                                ->withImage('image', 'Image')
+                                ->withArrayOf('captions', 'Captions', function (ContentGroupDefiner $caption) {
+                                    $caption->withText('caption', 'Caption');
+                                });
+                        });
+
                 });
 
                 $content->module('emails', 'envelope', function (ContentModuleDefinition $content) {
@@ -178,11 +188,15 @@ class ContentPackageTest extends CmsTestCase
         $homeGroup->htmlContentAreas[]  = new HtmlContentArea('info', new Html(''));
         $homeGroup->imageContentAreas[] = new ImageContentArea('banner', new Image(''));
 
+        $carouselGroup = new ContentGroup('pages', 'carousel', $this->mockClock());
+        $carouselGroup->setId(4);
+
         $emailGroup = new ContentGroup('emails', 'notification', $this->mockClock());
-        $emailGroup->setId(4);
+        $emailGroup->setId(5);
         $emailGroup->htmlContentAreas[] = new HtmlContentArea('info', new Html(''));
 
-        $this->assertEquals([$templateGroup, $homeGroup, $emailGroup], $this->repo->getAll());
+
+        $this->assertEquals([$templateGroup, $homeGroup, $carouselGroup, $emailGroup], $this->repo->getAll());
     }
 
     public function testAddAndDeleteAreDisabled()
@@ -250,5 +264,74 @@ class ContentPackageTest extends CmsTestCase
     public function testLoadSummaryTable()
     {
         $this->package->loadModule('pages')->getTable(ICrudModule::SUMMARY_TABLE)->loadView();
+    }
+
+    public function testViewNestedCarousel()
+    {
+        $group = $this->repo->get(4);
+
+        $image                      = new ContentGroup('__element__', 'images', $this->mockClock());
+        $image->imageContentAreas[] = new ImageContentArea('image', $uploadedImage = new Image(__DIR__ . '/Fixtures/image.gif', 'client-name.png'));
+
+        $caption                     = new ContentGroup('__element__', 'captions', $this->mockClock());
+        $caption->textContentAreas[] = new TextContentArea('caption', 'Some Caption');
+
+        $image->nestedArrayContentGroups[] = $caption;
+
+        $group->nestedArrayContentGroups[] = $image;
+
+        $this->repo->save($group);
+
+        $expected = [
+            'array_images' => [
+                [
+                    'image_image'          => $uploadedImage,
+                    'image_alt_text_image' => null,
+                    'array_captions'       => [
+                        ['text_caption' => 'Some Caption'],
+                    ],
+                ],
+            ],
+        ];
+
+        $actual = $this->package->loadModule('pages')->getParameterizedAction(ICrudModule::DETAILS_ACTION)->run([
+            IObjectAction::OBJECT_FIELD_NAME => 4,
+        ])->getFormForStage(2, [])->getInitialValues();
+
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function testEditNestedCarousel()
+    {
+        $this->package->loadModule('pages')->getParameterizedAction(ICrudModule::EDIT_ACTION)->run([
+            IObjectAction::OBJECT_FIELD_NAME => 4,
+            'array_images'                   => [
+                [
+                    'image_image'    => [
+                        'action' => UploadAction::STORE_NEW,
+                        'file'   => new UploadedImageProxy(new Image(__DIR__ . '/Fixtures/image.gif', 'client-name.png')),
+                    ],
+                    'array_captions' => [
+                        ['text_caption' => 'Some Caption'],
+                    ],
+                ],
+            ],
+        ]);
+
+        $group = new ContentGroup('pages', 'carousel', $this->mockClock());
+        $group->setId(4);
+
+        $image                      = new ContentGroup('__element__', 'images', $this->mockClock());
+        $image->imageContentAreas[] = new ImageContentArea('image', $uploadedImage = new Image(__DIR__ . '/Fixtures/image.gif', 'client-name.png'));
+        $uploadedImage->getWidth();
+
+        $caption                     = new ContentGroup('__element__', 'captions', $this->mockClock());
+        $caption->textContentAreas[] = new TextContentArea('caption', 'Some Caption');
+
+        $image->nestedArrayContentGroups[] = $caption;
+
+        $group->nestedArrayContentGroups[] = $image;
+
+        $this->assertEquals($group, $this->repo->get(4));
     }
 }

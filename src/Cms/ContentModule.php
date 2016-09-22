@@ -356,6 +356,7 @@ class ContentModule extends CrudModule
         $values = [];
 
         foreach ($this->getFieldsInOrder($groupDefinition) as $field) {
+            
             if ($field['type'] === 'html') {
 
                 $values['html_' . $field['name']] = $group->hasHtml($field['name']) ? $group->getHtml($field['name']) : new Html('');

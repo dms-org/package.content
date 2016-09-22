@@ -25,6 +25,7 @@ use Dms\Package\Content\Core\ContentMetadata;
 use Dms\Package\Content\Core\HtmlContentArea;
 use Dms\Package\Content\Core\ImageContentArea;
 use Dms\Package\Content\Core\Repositories\IContentGroupRepository;
+use Dms\Package\Content\Core\TextContentArea;
 
 /**
  *
@@ -98,11 +99,12 @@ class ContentPackageTest extends CmsTestCase
                     $content->group('template', 'Template')
                         ->withImage('banner', 'Banner')
                         ->withHtml('header', 'Header')
+                        ->withText('text', 'Text')
                         ->withHtml('footer', 'Footer');
 
                     $content->page('home', 'Home', '/homepage')
                         ->withHtml('info', 'Info', '#info')
-                        ->withImage('banner', 'Banner');
+                        ->withImageAndAltText('banner', 'Banner');
 
                 });
 
@@ -141,6 +143,7 @@ class ContentPackageTest extends CmsTestCase
         $templateGroup->htmlContentAreas[]  = new HtmlContentArea('extra', new Html(''));
         $templateGroup->imageContentAreas[] = new ImageContentArea('banner', new Image(__FILE__));
         $templateGroup->imageContentAreas[] = new ImageContentArea('extra', new Image(''));
+        $templateGroup->textContentAreas[]  = new TextContentArea('fsef', 'test');
         $templateGroup->metadata[]          = new ContentMetadata('extra', 'val');
 
         $contentGroups = [$contentGroup, $templateGroup];
@@ -168,19 +171,16 @@ class ContentPackageTest extends CmsTestCase
         $templateGroup->htmlContentAreas[]  = new HtmlContentArea('header', new Html('some header'));
         $templateGroup->htmlContentAreas[]  = new HtmlContentArea('footer', new Html('some footer'));
         $templateGroup->imageContentAreas[] = new ImageContentArea('banner', new Image(__FILE__));
+        $templateGroup->textContentAreas[]  = new TextContentArea('text', '');
 
         $homeGroup = new ContentGroup('pages', 'home', $this->mockClock());
         $homeGroup->setId(3);
         $homeGroup->htmlContentAreas[]  = new HtmlContentArea('info', new Html(''));
         $homeGroup->imageContentAreas[] = new ImageContentArea('banner', new Image(''));
-        $homeGroup->metadata[]          = new ContentMetadata('title', '');
-        $homeGroup->metadata[]          = new ContentMetadata('description', '');
-        $homeGroup->metadata[]          = new ContentMetadata('keywords', '');
 
         $emailGroup = new ContentGroup('emails', 'notification', $this->mockClock());
         $emailGroup->setId(4);
         $emailGroup->htmlContentAreas[] = new HtmlContentArea('info', new Html(''));
-        $emailGroup->metadata[]         = new ContentMetadata('subject', '');
 
         $this->assertEquals([$templateGroup, $homeGroup, $emailGroup], $this->repo->getAll());
     }
@@ -202,9 +202,6 @@ class ContentPackageTest extends CmsTestCase
             ],
             'image_alt_text_banner'          => 'Abc',
             'html_info'                      => 'Info',
-            'metadata_title'                 => 'Title',
-            'metadata_description'           => 'Desc',
-            'metadata_keywords'              => 'Keywords',
         ]);
 
         $homeGroup = new ContentGroup('pages', 'home', $this->mockClock());
@@ -213,11 +210,34 @@ class ContentPackageTest extends CmsTestCase
         $image                         = new Image(__DIR__ . '/Fixtures/image.gif', 'client-name.png');
         $image->getWidth();
         $homeGroup->imageContentAreas[] = new ImageContentArea('banner', $image, 'Abc');
-        $homeGroup->metadata[]          = new ContentMetadata('title', 'Title');
-        $homeGroup->metadata[]          = new ContentMetadata('description', 'Desc');
-        $homeGroup->metadata[]          = new ContentMetadata('keywords', 'Keywords');
 
         $this->assertEquals($homeGroup, $this->repo->get(3));
+    }
+
+
+    public function testEditTemplate()
+    {
+        $this->package->loadModule('pages')->getParameterizedAction(ICrudModule::EDIT_ACTION)->run([
+            IObjectAction::OBJECT_FIELD_NAME => 2,
+            'image_banner'                   => [
+                'action' => UploadAction::STORE_NEW,
+                'file'   => new UploadedImageProxy(new Image(__DIR__ . '/Fixtures/image.gif', 'client-name.png')),
+            ],
+            'html_header'                    => 'Info',
+            'html_footer'                    => 'Abc',
+            'text_text'                      => '123',
+        ]);
+
+        $homeGroup = new ContentGroup('pages', 'template', $this->mockClock());
+        $homeGroup->setId(2);
+        $image = new Image(__DIR__ . '/Fixtures/image.gif', 'client-name.png');
+        $image->getWidth();
+        $homeGroup->imageContentAreas[] = new ImageContentArea('banner', $image);
+        $homeGroup->htmlContentAreas[]  = new HtmlContentArea('header', new Html('Info'));
+        $homeGroup->htmlContentAreas[]  = new HtmlContentArea('footer', new Html('Abc'));
+        $homeGroup->textContentAreas[]  = new TextContentArea('text', '123');
+
+        $this->assertEquals($homeGroup, $this->repo->get(2));
     }
 
     public function testDetails()

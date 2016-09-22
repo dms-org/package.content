@@ -11,6 +11,7 @@ use Dms\Core\Package\Definition\PackageDefinition;
 use Dms\Core\Package\Package;
 use Dms\Core\Util\IClock;
 use Dms\Package\Content\Cms\Definition\ContentConfigDefinition;
+use Dms\Package\Content\Cms\Definition\ContentGroupDefinition;
 use Dms\Package\Content\Cms\Definition\ContentPackageDefinition;
 use Dms\Package\Content\Core\ContentConfig;
 use Dms\Package\Content\Core\ContentGroup;
@@ -19,6 +20,7 @@ use Dms\Package\Content\Core\ContentMetadata;
 use Dms\Package\Content\Core\HtmlContentArea;
 use Dms\Package\Content\Core\ImageContentArea;
 use Dms\Package\Content\Core\Repositories\IContentGroupRepository;
+use Dms\Package\Content\Core\TextContentArea;
 use Dms\Package\Content\Persistence\DbContentGroupRepository;
 
 /**
@@ -180,22 +182,33 @@ abstract class ContentPackage extends Package
         $contentGroupRepository->saveAll(array_merge($contentGroupsToSync, $contentGroupsToCreate));
     }
 
+    /**
+     * @param ContentModule            $module
+     * @param ContentGroupDefinition[] $contentGroupSchemas
+     * @param IClock                   $clock
+     *
+     * @return array
+     */
     private function buildNewContentGroups(ContentModule $module, array $contentGroupSchemas, IClock $clock) : array
     {
         $contentGroups = [];
 
         foreach ($contentGroupSchemas as $contentGroupSchema) {
-            $contentGroup = new ContentGroup($module->getName(), $contentGroupSchema['name'], $clock);
+            $contentGroup = new ContentGroup($module->getName(), $contentGroupSchema->name, $clock);
 
-            foreach ($contentGroupSchema['html_areas'] as $area) {
+            foreach ($contentGroupSchema->htmlAreas as $area) {
                 $contentGroup->htmlContentAreas[] = new HtmlContentArea($area['name'], new Html(''));
             }
 
-            foreach ($contentGroupSchema['images'] as $area) {
+            foreach ($contentGroupSchema->images as $area) {
                 $contentGroup->imageContentAreas[] = new ImageContentArea($area['name'], new Image(''));
             }
 
-            foreach ($contentGroupSchema['metadata'] as $item) {
+            foreach ($contentGroupSchema->textAreas as $area) {
+                $contentGroup->metadata[] = new ContentMetadata($area['name'], '');
+            }
+
+            foreach ($contentGroupSchema->metadata as $item) {
                 $contentGroup->metadata[] = new ContentMetadata($item['name'], '');
             }
 
@@ -205,33 +218,52 @@ abstract class ContentPackage extends Package
         return $contentGroups;
     }
 
-    private function syncContentGroupWithSchema(ContentGroup $contentGroup, array $contentGroupSchema) : ContentGroup
+    /**
+     * @param ContentGroup             $contentGroup
+     * @param ContentGroupDefinition $contentGroupSchema
+     *
+     * @return ContentGroup
+     */
+    private function syncContentGroupWithSchema(ContentGroup $contentGroup, ContentGroupDefinition $contentGroupSchema) : ContentGroup
     {
         $contentGroup->htmlContentAreas->removeWhere(function (HtmlContentArea $area) use ($contentGroupSchema) {
-            return !isset($contentGroupSchema['html_areas'][$area->name]);
+            return !isset($contentGroupSchema->htmlAreas[$area->name]);
         });
 
         $htmlNames = $contentGroup->htmlContentAreas->indexBy(function (HtmlContentArea $area) {
             return $area->name;
         })->asArray();
 
-        foreach (array_diff_key($contentGroupSchema['html_areas'], $htmlNames) as $area) {
+        foreach (array_diff_key($contentGroupSchema->htmlAreas, $htmlNames) as $area) {
             $contentGroup->htmlContentAreas[] = new HtmlContentArea($area['name'], new Html(''));
         }
 
         $contentGroup->imageContentAreas->removeWhere(function (ImageContentArea $area) use ($contentGroupSchema) {
-            return !isset($contentGroupSchema['images'][$area->name]);
+            return !isset($contentGroupSchema->images[$area->name]);
         });
 
         $imageNames = $contentGroup->imageContentAreas->indexBy(function (ImageContentArea $area) {
             return $area->name;
         })->asArray();
 
-        foreach (array_diff_key($contentGroupSchema['images'], $imageNames) as $area) {
+        foreach (array_diff_key($contentGroupSchema->images, $imageNames) as $area) {
             $contentGroup->imageContentAreas[] = new ImageContentArea($area['name'], new Image(''));
         }
 
-        $validMetadataOptions = array_fill_keys(array_column($contentGroupSchema['metadata'], 'name'), true);
+        $validTextOptions = array_fill_keys(array_column($contentGroupSchema->textAreas, 'name'), true);
+        $contentGroup->textContentAreas->removeWhere(function (TextContentArea $contentArea) use ($validTextOptions) {
+            return !isset($validTextOptions[$contentArea->name]);
+        });
+
+        $textNames = $contentGroup->textContentAreas->indexBy(function (TextContentArea $contentArea) {
+            return $contentArea->name;
+        })->asArray();
+
+        foreach (array_diff_key($validTextOptions, $textNames) as $name => $unusedVariable) {
+            $contentGroup->textContentAreas[] = new TextContentArea($name, '');
+        }
+
+        $validMetadataOptions = array_fill_keys(array_column($contentGroupSchema->metadata, 'name'), true);
         $contentGroup->metadata->removeWhere(function (ContentMetadata $metadata) use ($validMetadataOptions) {
             return !isset($validMetadataOptions[$metadata->name]);
         });
@@ -239,7 +271,7 @@ abstract class ContentPackage extends Package
         $metadataNames = $contentGroup->metadata->indexBy(function (ContentMetadata $content) {
             return $content->name;
         })->asArray();
-        
+
         foreach (array_diff_key($validMetadataOptions, $metadataNames) as $name => $unusedVariable) {
             $contentGroup->metadata[] = new ContentMetadata($name, '');
         }

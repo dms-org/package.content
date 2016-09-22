@@ -19,6 +19,7 @@ class ContentGroup extends Entity
     const NAME = 'name';
     const HTML_CONTENT_AREAS = 'htmlContentAreas';
     const IMAGE_CONTENT_AREAS = 'imageContentAreas';
+    const TEXT_CONTENT_AREAS = 'textContentAreas';
     const METADATA = 'metadata';
     const UPDATED_AT = 'updatedAt';
 
@@ -41,6 +42,11 @@ class ContentGroup extends Entity
      * @var ValueObjectCollection|ImageContentArea[]
      */
     public $imageContentAreas;
+
+    /**
+     * @var ValueObjectCollection|TextContentArea[]
+     */
+    public $textContentAreas;
 
     /**
      * @var ValueObjectCollection|ContentMetadata[]
@@ -67,6 +73,7 @@ class ContentGroup extends Entity
         $this->name              = $name;
         $this->htmlContentAreas  = HtmlContentArea::collection();
         $this->imageContentAreas = ImageContentArea::collection();
+        $this->textContentAreas  = TextContentArea::collection();
         $this->metadata          = ContentMetadata::collection();
         $this->updatedAt         = new DateTime($clock->utcNow());
     }
@@ -86,6 +93,8 @@ class ContentGroup extends Entity
 
         $class->property($this->imageContentAreas)->asType(ImageContentArea::collectionType());
 
+        $class->property($this->textContentAreas)->asType(TextContentArea::collectionType());
+        
         $class->property($this->metadata)->asType(ContentMetadata::collectionType());
 
         $class->property($this->updatedAt)->asObject(DateTime::class);
@@ -149,6 +158,30 @@ class ContentGroup extends Entity
     {
         return $this->metadata->any(function (ContentMetadata $metadata) use ($name) {
             return $metadata->name === $name;
+        });
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return TextContentArea|null
+     */
+    public function getText(string $name)
+    {
+        return $this->textContentAreas->where(function (TextContentArea $contentArea) use ($name) {
+            return $contentArea->name === $name;
+        })->first();
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function hasText(string $name) : bool
+    {
+        return $this->textContentAreas->any(function (TextContentArea $contentArea) use ($name) {
+            return $contentArea->name === $name;
         });
     }
 

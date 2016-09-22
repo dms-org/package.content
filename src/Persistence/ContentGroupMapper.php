@@ -13,6 +13,7 @@ use Dms\Package\Content\Core\ContentGroup;
 use Dms\Package\Content\Core\ContentMetadata;
 use Dms\Package\Content\Core\HtmlContentArea;
 use Dms\Package\Content\Core\ImageContentArea;
+use Dms\Package\Content\Core\TextContentArea;
 
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
@@ -88,6 +89,22 @@ class ContentGroupMapper extends EntityMapper
                 $map->unique('content_group_images_unique_index')
                     ->on(['content_group_id', 'name']);
             });
+
+        $map->embeddedCollection(ContentGroup::TEXT_CONTENT_AREAS)
+            ->toTable('content_group_text_areas')
+            ->withPrimaryKey('id')
+            ->withForeignKeyToParentAs('content_group_id')
+            ->usingCustom(function (MapperDefinition $map) {
+                $map->type(TextContentArea::class);
+
+                $map->column('content_group_id')->asUnsignedInt();
+                $map->property(TextContentArea::NAME)->to('name')->asVarchar(100);
+                $map->property(TextContentArea::TEXT)->to('text')->asText();
+
+                $map->unique('content_group_text_unique_index')
+                    ->on(['content_group_id', 'name']);
+            });
+
 
         $map->embeddedCollection(ContentGroup::METADATA)
             ->toTable('content_group_metadata')

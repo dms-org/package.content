@@ -14,6 +14,7 @@ use Dms\Package\Content\Core\ContentGroup;
 use Dms\Package\Content\Core\ContentMetadata;
 use Dms\Package\Content\Core\HtmlContentArea;
 use Dms\Package\Content\Core\ImageContentArea;
+use Dms\Package\Content\Core\TextContentArea;
 use Dms\Package\Content\Persistence\ContentGroupMapper;
 use Dms\Package\Content\Persistence\ContentOrm;
 use Dms\Package\Content\Persistence\DbContentGroupRepository;
@@ -67,6 +68,9 @@ class ContentOrmTest extends DbIntegrationTest
         $contentGroup->imageContentAreas[] = new ImageContentArea('image-area-1', new Image(__FILE__));
         $contentGroup->imageContentAreas[] = new ImageContentArea('image-area-2', new Image(__FILE__, 'client-name.png'), 'alt-text');
 
+        $contentGroup->textContentAreas[] = new TextContentArea('text-area-1', 'ABC');
+        $contentGroup->textContentAreas[] = new TextContentArea('text-area-2', '123');
+
         $contentGroup->metadata[] = new ContentMetadata('key', 'val');
         $contentGroup->metadata[] = new ContentMetadata('title', 'Some Title');
 
@@ -83,6 +87,10 @@ class ContentOrmTest extends DbIntegrationTest
             'content_group_image_areas' => [
                 ['id' => 1, 'content_group_id' => 1, 'name' => 'image-area-1', 'image_path' => basename(__FILE__), 'client_file_name' => null, 'alt_text' => null],
                 ['id' => 2, 'content_group_id' => 1, 'name' => 'image-area-2', 'image_path' => basename(__FILE__), 'client_file_name' => 'client-name.png', 'alt_text' => 'alt-text'],
+            ],
+            'content_group_text_areas' => [
+                ['id' => 1, 'content_group_id' => 1, 'name' => 'text-area-1', 'text' => 'ABC'],
+                ['id' => 2, 'content_group_id' => 1, 'name' => 'text-area-2', 'text' => '123'],
             ],
             'content_group_metadata' => [
                 ['id' => 1, 'content_group_id' => 1, 'name' => 'key', 'value' => 'val'],

@@ -155,6 +155,29 @@ class LoadedContentGroup
     }
 
     /**
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function hasText(string $name) : bool
+    {
+        return $this->content->hasText($name);
+    }
+
+    /**
+     * @param string $name
+     * @param string $default
+     *
+     * @return string
+     */
+    public function getText(string $name, string $default = '') : string
+    {
+        $metadata = $this->content->getText($name);
+
+        return $metadata ? $metadata->text : $default;
+    }
+
+    /**
      * @return string
      */
     public function renderMetadataAsHtml() : string

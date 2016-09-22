@@ -1,13 +1,13 @@
 <?php declare(strict_types = 1);
 
-namespace Dms\Package\Content\Tests\Core;
+namespace Dms\Package\Content\Tests\Cms\Preview;
 
 use Dms\Common\Structure\FileSystem\Image;
 use Dms\Common\Structure\Web\Html;
 use Dms\Common\Testing\CmsTestCase;
-use Dms\Core\Exception\InvalidArgumentException;
 use Dms\Core\Persistence\ArrayRepository;
 use Dms\Core\Util\DateTimeClock;
+use Dms\Package\Content\Cms\Preview\InterpolatingContentLoaderServiceProxy;
 use Dms\Package\Content\Core\ContentConfig;
 use Dms\Package\Content\Core\ContentGroup;
 use Dms\Package\Content\Core\ContentLoaderService;
@@ -21,16 +21,19 @@ use Dms\Package\Content\Core\TextContentArea;
 /**
  * @author Elliot Levin <elliotlevin@hotmail.com>
  */
-class ContentLoaderServiceTest extends CmsTestCase
+class InterpolatingContentLoaderServiceProxyTest extends CmsTestCase
 {
     /**
-     * @var ContentLoaderService
+     * @var InterpolatingContentLoaderServiceProxy
      */
     protected $loader;
 
+
     public function setUp()
     {
-        $this->loader = new ContentLoaderService(new ContentConfig(__DIR__ . '/../Cms/Fixtures', '/some/url'), $this->mockRepo(), new DateTimeClock());
+        $this->loader = new InterpolatingContentLoaderServiceProxy(
+            new ContentLoaderService(new ContentConfig(__DIR__ . '/../Fixtures', '/some/url'), $this->mockRepo(), new DateTimeClock())
+        );
     }
 
     private function mockRepo() : IContentGroupRepository
@@ -39,11 +42,13 @@ class ContentLoaderServiceTest extends CmsTestCase
             'namespace', 'name', new DateTimeClock()
         );
 
+        $contentGroup->setId(123);
+
         $contentGroup->htmlContentAreas[] = new HtmlContentArea('html-area-1', new Html('<strong>ABC</strong>'));
         $contentGroup->htmlContentAreas[] = new HtmlContentArea('html-area-2', new Html('<small>123</small>'));
 
         $contentGroup->imageContentAreas[] = new ImageContentArea('image-area-1', new Image(__FILE__));
-        $contentGroup->imageContentAreas[] = new ImageContentArea('image-area-2', new Image(__DIR__ . '/../Cms/Fixtures/image.gif', 'client-name.png'), 'alt-text');
+        $contentGroup->imageContentAreas[] = new ImageContentArea('image-area-2', new Image(__DIR__ . '/../Fixtures/image.gif', 'client-name.png'), 'alt-text');
 
         $contentGroup->textContentAreas[] = new TextContentArea('text-a', 'some text');
         $contentGroup->textContentAreas[] = new TextContentArea('text-b', 'more text');
@@ -66,46 +71,16 @@ class ContentLoaderServiceTest extends CmsTestCase
         $this->assertInstanceOf(LoadedContentGroup::class, $group);
         $this->assertSame('namespace', $group->getContentGroup()->namespace);
         $this->assertSame('name', $group->getContentGroup()->name);
-        $this->assertSame('<strong>ABC</strong>', $group->getHtml('html-area-1'));
-        $this->assertSame('<small>123</small>', $group->getHtml('html-area-2'));
+        $this->assertSame('!~~~@###!123!:!:!html-area-1:!:!:<strong>ABC</strong>!~~~@###!', $group->getHtml('html-area-1'));
+        $this->assertSame('!~~~@###!123!:!:!html-area-2:!:!:<small>123</small>!~~~@###!', $group->getHtml('html-area-2'));
         $this->assertSame('', $group->getImageUrl('image-area-1'));
         $this->assertSame(null, $group->getImage('image-area-1'));
         $this->assertSame('', $group->getImageAltText('image-area-1'));
-        $this->assertSame('/some/url/image.gif', $group->getImageUrl('image-area-2'));
-        $this->assertSame('some text', $group->getText('text-a'));
-        $this->assertSame('more text', $group->getText('text-b'));
+        $this->assertSame('/some/url/!~~~@###!123!:!:!image-area-2:!:!:image.gif!~~~@###!', $group->getImageUrl('image-area-2'));
+        $this->assertSame('!~~~@###!123!:!:!text-a:!:!:some text!~~~@###!', $group->getText('text-a'));
+        $this->assertSame('!~~~@###!123!:!:!text-b:!:!:more text!~~~@###!', $group->getText('text-b'));
         $this->assertSame('', $group->getText('text-c'));
         $this->assertSame('val', $group->getMetadata('key'));
         $this->assertSame('Some Title', $group->getMetadata('title'));
-        $this->assertSame('<meta name="key" content="val" />' . PHP_EOL . '<title>Some Title</title>', $group->renderMetadataAsHtml());
-    }
-
-    public function testLoadNonExistent()
-    {
-        $group = $this->loader->load('unknown.name');
-
-        $this->assertInstanceOf(LoadedContentGroup::class, $group);
-        $this->assertSame('unknown', $group->getContentGroup()->namespace);
-        $this->assertSame('name', $group->getContentGroup()->name);
-        $this->assertSame(0, $group->getContentGroup()->htmlContentAreas->count());
-        $this->assertSame(0, $group->getContentGroup()->imageContentAreas->count());
-        $this->assertSame(0, $group->getContentGroup()->metadata->count());
-    }
-
-    public function testDefaults()
-    {
-        $group = $this->loader->load('unknown.name');
-
-        $this->assertInstanceOf(LoadedContentGroup::class, $group);
-        $this->assertSame('default', $group->getHtml('invalid', 'default'));
-        $this->assertSame('default', $group->getMetadata('invalid', 'default'));
-        $this->assertSame('default', $group->getImageUrl('invalid', 'default'));
-        $this->assertSame('default', $group->getImageAltText('invalid', 'default'));
-    }
-
-    public function testInvalidGroupName()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->loader->load('some-invalid-name');
     }
 }

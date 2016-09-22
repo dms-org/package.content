@@ -11,12 +11,14 @@ use Dms\Core\Common\Crud\Definition\CrudModuleDefinition;
 use Dms\Core\Common\Crud\Definition\Form\CrudFormDefinition;
 use Dms\Core\Common\Crud\Definition\Table\SummaryTableDefinition;
 use Dms\Core\Util\IClock;
+use Dms\Package\Content\Cms\Definition\ContentGroupDefinition;
 use Dms\Package\Content\Core\ContentConfig;
 use Dms\Package\Content\Core\ContentGroup;
 use Dms\Package\Content\Core\ContentMetadata;
 use Dms\Package\Content\Core\HtmlContentArea;
 use Dms\Package\Content\Core\ImageContentArea;
 use Dms\Package\Content\Core\Repositories\IContentGroupRepository;
+use Dms\Package\Content\Core\TextContentArea;
 
 /**
  * The content definition.
@@ -36,7 +38,7 @@ class ContentModule extends CrudModule
     private $icon;
 
     /**
-     * @var array[]
+     * @var ContentGroupDefinition[]
      */
     private $contentGroups;
 
@@ -53,13 +55,13 @@ class ContentModule extends CrudModule
     /**
      * ContentModule constructor.
      *
-     * @param IContentGroupRepository $dataSource
-     * @param IAuthSystem             $authSystem
-     * @param string                  $name
-     * @param string                  $icon
-     * @param array                   $contentGroups
-     * @param ContentConfig           $config
-     * @param IClock                  $clock
+     * @param IContentGroupRepository  $dataSource
+     * @param IAuthSystem              $authSystem
+     * @param string                   $name
+     * @param string                   $icon
+     * @param ContentGroupDefinition[] $contentGroups
+     * @param ContentConfig            $config
+     * @param IClock                   $clock
      */
     public function __construct(
         IContentGroupRepository $dataSource,
@@ -101,7 +103,7 @@ class ContentModule extends CrudModule
         ]);
 
         $labelCallback = function (ContentGroup $group) {
-            return $this->contentGroups[$group->name]['label'] ?? '<unkown>';
+            return $this->contentGroups[$group->name]->label ?? '<unkown>';
         };
 
         $module->labelObjects()->fromCallback($labelCallback);
@@ -119,6 +121,8 @@ class ContentModule extends CrudModule
                         $this->defineHtmlField($form, $field);
                     } elseif ($field['type'] === 'image') {
                         $this->defineImageField($form, $field);
+                    } elseif ($field['type'] === 'text') {
+                        $this->defineTextField($form, $field);
                     } else {
                         $this->defineMetadataField($form, $field);
                     }
@@ -128,6 +132,7 @@ class ContentModule extends CrudModule
             $form->onSubmit(function (ContentGroup $contentGroup, array $input) {
                 $contentGroup->imageContentAreas->clear();
                 $contentGroup->htmlContentAreas->clear();
+                $contentGroup->textContentAreas->clear();
                 $contentGroup->metadata->clear();
 
                 foreach ($this->getFieldsInOrder($contentGroup) as $field) {
@@ -140,7 +145,12 @@ class ContentModule extends CrudModule
                         $contentGroup->imageContentAreas[] = new ImageContentArea(
                             $field['name'],
                             $input['image_' . $field['name']] ?? new Image(''),
-                            $input['image_alt_text_' . $field['name']]
+                            $input['image_alt_text_' . $field['name']] ?? ''
+                        );
+                    } elseif (!empty($input['text_' . $field['name']])) {
+                        $contentGroup->textContentAreas[] = new TextContentArea(
+                            $field['name'],
+                            $input['text_' . $field['name']]
                         );
                     } elseif (!empty($input['metadata_' . $field['name']])) {
                         $contentGroup->metadata[] = new ContentMetadata(
@@ -177,11 +187,20 @@ class ContentModule extends CrudModule
     {
         $fieldsInOrder = [];
 
-        foreach (['html_areas' => 'html', 'images' => 'image', 'metadata' => 'metadata'] as $option => $type) {
+        foreach ($this->contentGroups[$group->name]->htmlAreas as $field) {
+            $fieldsInOrder[$field['order']] = $field + ['type' => 'html'];
+        }
 
-            foreach ($this->contentGroups[$group->name][$option] ?? [] as $field) {
-                $fieldsInOrder[$field['order']] = $field + ['type' => $type];
-            }
+        foreach ($this->contentGroups[$group->name]->images as $field) {
+            $fieldsInOrder[$field['order']] = $field + ['type' => 'image'];
+        }
+
+        foreach ($this->contentGroups[$group->name]->textAreas as $field) {
+            $fieldsInOrder[$field['order']] = $field + ['type' => 'text'];
+        }
+
+        foreach ($this->contentGroups[$group->name]->metadata as $field) {
+            $fieldsInOrder[$field['order']] = $field + ['type' => 'metadata'];
         }
 
         ksort($fieldsInOrder, SORT_NUMERIC);
@@ -191,7 +210,7 @@ class ContentModule extends CrudModule
 
     protected function defineImageField(CrudFormDefinition $form, array $field)
     {
-        $form->continueSection([
+        $fields = [
             $form->field(
                 Field::create('image_' . $field['name'], $field['label'])
                     ->image()
@@ -201,15 +220,19 @@ class ContentModule extends CrudModule
             }, function (ContentGroup $group) {
 
             }),
-            //
-            $form->field(
+        ];
+
+        if (!empty($field['alt_text'])) {
+            $fields[] = $form->field(
                 Field::create('image_alt_text_' . $field['name'], $field['label'] . ' - Alt Text')->string()->defaultTo('')
             )->bindToCallbacks(function (ContentGroup $group) use ($field) {
                 return $group->hasImage($field['name']) ? $group->getImage($field['name'])->altText : '';
             }, function (ContentGroup $group) {
 
-            }),
-        ]);
+            });
+        }
+
+        $form->continueSection($fields);
     }
 
     protected function defineHtmlField(CrudFormDefinition $form, array $field)
@@ -219,6 +242,19 @@ class ContentModule extends CrudModule
                 Field::create('html_' . $field['name'], $field['label'])->html()
             )->bindToCallbacks(function (ContentGroup $group) use ($field) {
                 return $group->hasHtml($field['name']) ? $group->getHtml($field['name'])->html : '';
+            }, function (ContentGroup $group) {
+
+            }),
+        ]);
+    }
+
+    protected function defineTextField(CrudFormDefinition $form, array $field)
+    {
+        $form->continueSection([
+            $form->field(
+                Field::create('text_' . $field['name'], $field['label'])->string()->defaultTo('')
+            )->bindToCallbacks(function (ContentGroup $group) use ($field) {
+                return $group->hasText($field['name']) ? $group->getText($field['name'])->text : '';
             }, function (ContentGroup $group) {
 
             }),

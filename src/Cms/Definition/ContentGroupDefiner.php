@@ -10,7 +10,7 @@ namespace Dms\Package\Content\Cms\Definition;
 class ContentGroupDefiner
 {
     /**
-     * @var array
+     * @var ContentGroupDefinition
      */
     private $contentGroup;
 
@@ -22,11 +22,23 @@ class ContentGroupDefiner
     /**
      * ContentGroupDefiner constructor.
      *
-     * @param array $contentGroup
+     * @param ContentGroupDefinition $contentGroup
      */
-    public function __construct(array &$contentGroup)
+    public function __construct(ContentGroupDefinition $contentGroup)
     {
-        $this->contentGroup =& $contentGroup;
+        $this->contentGroup = $contentGroup;
+    }
+
+    /**
+     * @param callable $previewContentCallback
+     *
+     * @return static
+     */
+    public function setPreviewCallback(callable $previewContentCallback)
+    {
+        $this->contentGroup->previewCallback = $previewContentCallback;
+
+        return $this;
     }
 
     /**
@@ -37,7 +49,20 @@ class ContentGroupDefiner
      */
     public function withImage(string $name, string $label)
     {
-        $this->contentGroup['images'][$name] = ['name' => $name, 'label' => $label, 'order' => $this->order++];
+        $this->contentGroup->images[$name] = ['name' => $name, 'label' => $label, 'order' => $this->order++];
+
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @param string $label
+     *
+     * @return static
+     */
+    public function withImageAndAltText(string $name, string $label)
+    {
+        $this->contentGroup->images[$name] = ['name' => $name, 'label' => $label, 'alt_text' => true, 'order' => $this->order++];
 
         return $this;
     }
@@ -51,7 +76,7 @@ class ContentGroupDefiner
      */
     public function withHtml(string $name, string $label, string $containerElementCssSelector = null)
     {
-        $this->contentGroup['html_areas'][$name] = [
+        $this->contentGroup->htmlAreas[$name] = [
             'name'     => $name,
             'label'    => $label,
             'selector' => $containerElementCssSelector,
@@ -67,9 +92,22 @@ class ContentGroupDefiner
      *
      * @return static
      */
+    public function withText(string $name, string $label)
+    {
+        $this->contentGroup->textAreas[$name] = ['name' => $name, 'label' => $label, 'order' => $this->order++];
+
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @param string $label
+     *
+     * @return static
+     */
     public function withMetadata(string $name, string $label)
     {
-        $this->contentGroup['metadata'][$name] = ['name' => $name, 'label' => $label, 'order' => $this->order++];
+        $this->contentGroup->metadata[$name] = ['name' => $name, 'label' => $label, 'order' => $this->order++];
 
         return $this;
     }

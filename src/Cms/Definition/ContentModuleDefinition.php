@@ -58,15 +58,9 @@ class ContentModuleDefinition
      */
     public function group(string $name, string $label) : ContentGroupDefiner
     {
-        $contentGroup = [
-            'name'       => $name,
-            'label'      => $label,
-            'images'     => [],
-            'html_areas' => [],
-            'metadata'   => [],
-        ];
+        $contentGroup = new ContentGroupDefinition($name, $label);
 
-        $this->contentGroups[$name] =& $contentGroup;
+        $this->contentGroups[$name] = $contentGroup;
 
         return new ContentGroupDefiner($contentGroup);
     }
@@ -80,20 +74,9 @@ class ContentModuleDefinition
      */
     public function page(string $name, string $label, string $pageUrl = null) : ContentGroupDefiner
     {
-        $contentGroup = [
-            'name'       => $name,
-            'label'      => $label,
-            'page_url'   => $pageUrl,
-            'images'     => [],
-            'html_areas' => [],
-            'metadata'   => [
-                ['name' => 'title', 'label' => 'Title', 'order' => 1000],
-                ['name' => 'description', 'label' => 'Description', 'order' => 1001],
-                ['name' => 'keywords', 'label' => 'Keywords', 'order' => 1002],
-            ],
-        ];
+        $contentGroup = new ContentGroupDefinition($name, $label);
 
-        $this->contentGroups[$name] =& $contentGroup;
+        $this->contentGroups[$name] = $contentGroup;
 
         return new ContentGroupDefiner($contentGroup);
     }
@@ -106,17 +89,9 @@ class ContentModuleDefinition
      */
     public function email(string $name, string $label) : ContentGroupDefiner
     {
-        $contentGroup = [
-            'name'       => $name,
-            'label'      => $label,
-            'images'     => [],
-            'html_areas' => [],
-            'metadata'   => [
-                ['name' => 'subject', 'label' => 'Subject', 'order' => 1000],
-            ],
-        ];
+        $contentGroup = new ContentGroupDefinition($name, $label);
 
-        $this->contentGroups[$name] =& $contentGroup;
+        $this->contentGroups[$name] = $contentGroup;
 
         return new ContentGroupDefiner($contentGroup);
     }

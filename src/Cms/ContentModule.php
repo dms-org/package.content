@@ -361,7 +361,7 @@ class ContentModule extends CrudModule
 
             if ($field['type'] === 'html') {
 
-                $values['html_' . $field['name']] = $group->hasHtml($field['name']) ? $group->getHtml($field['name']) : new Html('');
+                $values['html_' . $field['name']] = $group->hasHtml($field['name']) ? $group->getHtml($field['name'])->html : new Html('');
 
             } elseif ($field['type'] === 'image') {
 

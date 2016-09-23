@@ -168,14 +168,30 @@ abstract class ContentPackage extends Package
             /** @var ContentModule $module */
             $contentGroups = $namespacedContentGroups[$module->getName()] ?? [];
 
-            $contentGroupSchemas = $module->getContentGroups();
+            $contentGroupSchemas  = $module->getContentGroups();
+            $contentGroupsToOrder = [];
 
-            $contentGroupsToRemove = array_merge($contentGroupsToRemove, array_diff_key($contentGroups, $contentGroupSchemas));
-            $contentGroupsToCreate = array_merge($contentGroupsToCreate, $this->buildNewContentGroups($module, array_diff_key($contentGroupSchemas, $contentGroups), $clock));
+            foreach (array_diff_key($contentGroupSchemas, $contentGroups) as $contentGroupDefinition) {
+                $contentGroup                              = $this->buildNewContentGroup($module, $contentGroupDefinition, $clock);
+                $contentGroupsToCreate[]                   = $contentGroup;
+                $contentGroupsToOrder[$contentGroup->name] = $contentGroup;
+            }
 
             foreach (array_intersect_key($contentGroups, $contentGroupSchemas) as $contentGroup) {
                 /** @var ContentGroup $contentGroup */
                 $contentGroupsToSync[] = $this->syncContentGroupWithSchema($contentGroup, $contentGroupSchemas[$contentGroup->name]);
+                $contentGroupsToOrder[$contentGroup->name] = $contentGroup;
+            }
+
+            foreach (array_diff_key($contentGroups, $contentGroupSchemas) as $contentGroup) {
+                $contentGroupsToRemove[] = $contentGroup;
+            }
+
+
+            $order = 1;
+
+            foreach ($contentGroupSchemas as $contentGroupDefinition) {
+                $contentGroupsToOrder[$contentGroupDefinition->name]->orderIndex = $order++;
             }
         }
 
@@ -184,43 +200,37 @@ abstract class ContentPackage extends Package
         }
 
         $contentGroupRepository->removeAll($contentGroupsToRemove);
-        $contentGroupRepository->saveAll(array_merge($contentGroupsToSync, $contentGroupsToCreate));
+        $contentGroupRepository->saveAll(array_merge($contentGroupsToCreate, $contentGroupsToSync));
     }
 
     /**
-     * @param ContentModule            $module
-     * @param ContentGroupDefinition[] $contentGroupSchemas
-     * @param IClock                   $clock
+     * @param ContentModule          $module
+     * @param ContentGroupDefinition $contentGroupDefinition
+     * @param IClock                 $clock
      *
-     * @return array
+     * @return ContentGroup
      */
-    private function buildNewContentGroups(ContentModule $module, array $contentGroupSchemas, IClock $clock) : array
+    private function buildNewContentGroup(ContentModule $module, ContentGroupDefinition $contentGroupDefinition, IClock $clock) : ContentGroup
     {
-        $contentGroups = [];
+        $contentGroup = new ContentGroup($module->getName(), $contentGroupDefinition->name, $clock);
 
-        foreach ($contentGroupSchemas as $contentGroupSchema) {
-            $contentGroup = new ContentGroup($module->getName(), $contentGroupSchema->name, $clock);
-
-            foreach ($contentGroupSchema->htmlAreas as $area) {
-                $contentGroup->htmlContentAreas[] = new HtmlContentArea($area['name'], new Html(''));
-            }
-
-            foreach ($contentGroupSchema->images as $area) {
-                $contentGroup->imageContentAreas[] = new ImageContentArea($area['name'], new Image(''));
-            }
-
-            foreach ($contentGroupSchema->textAreas as $area) {
-                $contentGroup->metadata[] = new ContentMetadata($area['name'], '');
-            }
-
-            foreach ($contentGroupSchema->metadata as $item) {
-                $contentGroup->metadata[] = new ContentMetadata($item['name'], '');
-            }
-
-            $contentGroups[] = $contentGroup;
+        foreach ($contentGroupDefinition->htmlAreas as $area) {
+            $contentGroup->htmlContentAreas[] = new HtmlContentArea($area['name'], new Html(''));
         }
 
-        return $contentGroups;
+        foreach ($contentGroupDefinition->images as $area) {
+            $contentGroup->imageContentAreas[] = new ImageContentArea($area['name'], new Image(''));
+        }
+
+        foreach ($contentGroupDefinition->textAreas as $area) {
+            $contentGroup->metadata[] = new ContentMetadata($area['name'], '');
+        }
+
+        foreach ($contentGroupDefinition->metadata as $item) {
+            $contentGroup->metadata[] = new ContentMetadata($item['name'], '');
+        }
+
+        return $contentGroup;
     }
 
     /**

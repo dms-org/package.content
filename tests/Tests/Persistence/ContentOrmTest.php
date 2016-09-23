@@ -61,6 +61,7 @@ class ContentOrmTest extends DbIntegrationTest
             'namespace', 'name', $this->mockClock(new \DateTimeImmutable('2000-01-01 00:00:11'))
         );
 
+        $contentGroup->orderIndex         = 1;
         $contentGroup->htmlContentAreas[] = new HtmlContentArea('html-area-1', new Html('<strong>ABC</strong>'));
         $contentGroup->htmlContentAreas[] = new HtmlContentArea('html-area-2', new Html('<small>123</small>'));
 
@@ -77,7 +78,7 @@ class ContentOrmTest extends DbIntegrationTest
 
         $this->assertDatabaseDataSameAs([
             'content_groups'            => [
-                ['id' => 1, 'parent_id' => null, 'namespace' => 'namespace', 'name' => 'name', 'updated_at' => '2000-01-01 00:00:11'],
+                ['id' => 1, 'parent_id' => null, 'namespace' => 'namespace', 'name' => 'name', 'order_index' => 1, 'updated_at' => '2000-01-01 00:00:11'],
             ],
             'content_group_html_areas'  => [
                 ['id' => 1, 'content_group_id' => 1, 'name' => 'html-area-1', 'html' => '<strong>ABC</strong>'],
@@ -104,13 +105,14 @@ class ContentOrmTest extends DbIntegrationTest
 
     public function testNestedContentGroups()
     {
-        $contentGroup  = new ContentGroup(
+        $contentGroup             = new ContentGroup(
             'namespace', 'name', $this->mockClock(new \DateTimeImmutable('2000-01-01 00:00:11'))
         );
-        $contentGroup1 = new ContentGroup(
+        $contentGroup->orderIndex = 1;
+        $contentGroup1            = new ContentGroup(
             '__element__', 'name', $this->mockClock(new \DateTimeImmutable('2000-01-01 00:00:11'))
         );
-        $contentGroup2 = new ContentGroup(
+        $contentGroup2            = new ContentGroup(
             '__element__', 'name', $this->mockClock(new \DateTimeImmutable('2000-01-01 00:00:11'))
         );
 
@@ -122,9 +124,9 @@ class ContentOrmTest extends DbIntegrationTest
 
         $this->assertDatabaseDataSameAs([
             'content_groups'            => [
-                ['id' => 1, 'parent_id' => null, 'namespace' => 'namespace', 'name' => 'name', 'updated_at' => '2000-01-01 00:00:11'],
-                ['id' => 2, 'parent_id' => 1, 'namespace' => '__element__', 'name' => 'name', 'updated_at' => '2000-01-01 00:00:11'],
-                ['id' => 3, 'parent_id' => 2, 'namespace' => '__element__', 'name' => 'name', 'updated_at' => '2000-01-01 00:00:11'],
+                ['id' => 1, 'parent_id' => null, 'namespace' => 'namespace', 'name' => 'name', 'order_index' => 1, 'updated_at' => '2000-01-01 00:00:11'],
+                ['id' => 2, 'parent_id' => 1, 'namespace' => '__element__', 'name' => 'name', 'order_index' => 1, 'updated_at' => '2000-01-01 00:00:11'],
+                ['id' => 3, 'parent_id' => 2, 'namespace' => '__element__', 'name' => 'name', 'order_index' => 1, 'updated_at' => '2000-01-01 00:00:11'],
             ],
             'content_group_html_areas'  => [],
             'content_group_image_areas' => [],
@@ -133,8 +135,12 @@ class ContentOrmTest extends DbIntegrationTest
         ]);
 
         $contentGroup->setId(1);
+        
         $contentGroup1->setId(2);
+        $contentGroup1->orderIndex = 1;
+        
         $contentGroup2->setId(3);
+        $contentGroup2->orderIndex = 1;
 
         $this->assertEquals($contentGroup, $this->repo->get(1));
     }

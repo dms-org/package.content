@@ -18,6 +18,7 @@ class ContentGroup extends Entity
 {
     const NAMESPACE = 'namespace';
     const NAME = 'name';
+    const ORDER_INDEX = 'orderIndex';
     const HTML_CONTENT_AREAS = 'htmlContentAreas';
     const IMAGE_CONTENT_AREAS = 'imageContentAreas';
     const TEXT_CONTENT_AREAS = 'textContentAreas';
@@ -34,6 +35,11 @@ class ContentGroup extends Entity
      * @var string
      */
     public $name;
+
+    /**
+     * @var int
+     */
+    public $orderIndex;
 
     /**
      * @var ValueObjectCollection|HtmlContentArea[]
@@ -96,6 +102,8 @@ class ContentGroup extends Entity
         $class->property($this->namespace)->asString();
 
         $class->property($this->name)->asString();
+        
+        $class->property($this->orderIndex)->asInt();
 
         $class->property($this->htmlContentAreas)->asType(HtmlContentArea::collectionType());
 

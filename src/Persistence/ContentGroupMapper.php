@@ -54,6 +54,7 @@ class ContentGroupMapper extends EntityMapper
         $map->column('parent_id')->nullable()->asUnsignedInt();
         $map->property(ContentGroup::NAMESPACE)->to('namespace')->asVarchar(255);
         $map->property(ContentGroup::NAME)->to('name')->asVarchar(255);
+        $map->property(ContentGroup::ORDER_INDEX)->to('order_index')->asInt();
 
         $map->embeddedCollection(ContentGroup::HTML_CONTENT_AREAS)
             ->toTable('content_group_html_areas')
@@ -123,6 +124,7 @@ class ContentGroupMapper extends EntityMapper
             ->using($this)
             ->toMany()
             ->identifying()
+            ->withOrderPersistedTo('order_index')
             ->withParentIdAs('parent_id');
 
         $map->embedded(ContentGroup::UPDATED_AT)

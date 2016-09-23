@@ -178,6 +178,7 @@ class ContentPackageTest extends CmsTestCase
     {
         $templateGroup = new ContentGroup('pages', 'template', $this->mockClock());
         $templateGroup->setId(2);
+        $templateGroup->orderIndex          = 1;
         $templateGroup->htmlContentAreas[]  = new HtmlContentArea('header', new Html('some header'));
         $templateGroup->htmlContentAreas[]  = new HtmlContentArea('footer', new Html('some footer'));
         $templateGroup->imageContentAreas[] = new ImageContentArea('banner', new Image(__FILE__));
@@ -185,14 +186,17 @@ class ContentPackageTest extends CmsTestCase
 
         $homeGroup = new ContentGroup('pages', 'home', $this->mockClock());
         $homeGroup->setId(3);
+        $homeGroup->orderIndex          = 2;
         $homeGroup->htmlContentAreas[]  = new HtmlContentArea('info', new Html(''));
         $homeGroup->imageContentAreas[] = new ImageContentArea('banner', new Image(''));
 
         $carouselGroup = new ContentGroup('pages', 'carousel', $this->mockClock());
         $carouselGroup->setId(4);
+        $carouselGroup->orderIndex = 3;
 
         $emailGroup = new ContentGroup('emails', 'notification', $this->mockClock());
         $emailGroup->setId(5);
+        $emailGroup->orderIndex         = 1;
         $emailGroup->htmlContentAreas[] = new HtmlContentArea('info', new Html(''));
 
 
@@ -220,6 +224,7 @@ class ContentPackageTest extends CmsTestCase
 
         $homeGroup = new ContentGroup('pages', 'home', $this->mockClock());
         $homeGroup->setId(3);
+        $homeGroup->orderIndex         = 2;
         $homeGroup->htmlContentAreas[] = new HtmlContentArea('info', new Html('Info'));
         $image                         = new Image(__DIR__ . '/Fixtures/image.gif', 'client-name.png');
         $image->getWidth();
@@ -244,7 +249,8 @@ class ContentPackageTest extends CmsTestCase
 
         $homeGroup = new ContentGroup('pages', 'template', $this->mockClock());
         $homeGroup->setId(2);
-        $image = new Image(__DIR__ . '/Fixtures/image.gif', 'client-name.png');
+        $homeGroup->orderIndex = 1;
+        $image                 = new Image(__DIR__ . '/Fixtures/image.gif', 'client-name.png');
         $image->getWidth();
         $homeGroup->imageContentAreas[] = new ImageContentArea('banner', $image);
         $homeGroup->htmlContentAreas[]  = new HtmlContentArea('header', new Html('Info'));
@@ -285,9 +291,8 @@ class ContentPackageTest extends CmsTestCase
         $expected = [
             'array_images' => [
                 [
-                    'image_image'          => $uploadedImage,
-                    'image_alt_text_image' => null,
-                    'array_captions'       => [
+                    'image_image'    => $uploadedImage,
+                    'array_captions' => [
                         ['text_caption' => 'Some Caption'],
                     ],
                 ],
@@ -320,6 +325,7 @@ class ContentPackageTest extends CmsTestCase
 
         $group = new ContentGroup('pages', 'carousel', $this->mockClock());
         $group->setId(4);
+        $group->orderIndex = 3;
 
         $image                      = new ContentGroup('__element__', 'images', $this->mockClock());
         $image->imageContentAreas[] = new ImageContentArea('image', $uploadedImage = new Image(__DIR__ . '/Fixtures/image.gif', 'client-name.png'));

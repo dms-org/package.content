@@ -84,7 +84,7 @@ class ContentModule extends CrudModule
     }
 
     /**
-     * @return array[]
+     * @return ContentGroupDefinition[]
      */
     public function getContentGroups()
     {
@@ -151,11 +151,13 @@ class ContentModule extends CrudModule
 
             $table->mapProperty(ContentGroup::UPDATED_AT)->to(Field::create('updated_at', 'Updated At')->dateTime());
 
+            $table->mapProperty(ContentGroup::ORDER_INDEX)->hidden()->to(Field::create('order', 'Order')->int());
+
             $table->view('all', 'All')
                 ->asDefault()
                 ->loadAll()
                 ->where('module_name', '=', $this->name)
-                ->orderByAsc('group_name');
+                ->orderByAsc('order');
         });
     }
 
@@ -356,7 +358,7 @@ class ContentModule extends CrudModule
         $values = [];
 
         foreach ($this->getFieldsInOrder($groupDefinition) as $field) {
-            
+
             if ($field['type'] === 'html') {
 
                 $values['html_' . $field['name']] = $group->hasHtml($field['name']) ? $group->getHtml($field['name']) : new Html('');

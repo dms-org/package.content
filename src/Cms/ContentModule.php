@@ -14,8 +14,10 @@ use Dms\Core\Common\Crud\Definition\Table\SummaryTableDefinition;
 use Dms\Core\Form\Builder\Form;
 use Dms\Core\Util\IClock;
 use Dms\Package\Content\Cms\Definition\ContentGroupDefinition;
+use Dms\Package\Content\Cms\Preview\PreviewContentLoader;
 use Dms\Package\Content\Core\ContentConfig;
 use Dms\Package\Content\Core\ContentGroup;
+use Dms\Package\Content\Core\ContentLoaderService;
 use Dms\Package\Content\Core\ContentMetadata;
 use Dms\Package\Content\Core\HtmlContentArea;
 use Dms\Package\Content\Core\ImageContentArea;
@@ -133,6 +135,19 @@ class ContentModule extends CrudModule
                 }
             });
 
+            $form->dependentOn(['*'], function (CrudFormDefinition $form, array $input, ContentGroup $group) {
+                if ($this->contentGroups[$group->name]->previewCallback) {
+                    $form->continueSection([
+                        $form->field(
+                            Field::create('preview', 'Preview')
+                                ->html()
+                                ->readonly()
+                                ->value(new Html($this->loadPreviewContent($group, $input)))
+                        )->withoutBinding(),
+                    ]);
+                }
+            });
+
             $form->onSubmit(function (ContentGroup $contentGroup, array $input) {
                 $this->updateContentGroup($contentGroup, $this->contentGroups[$contentGroup->name], $input);
             });
@@ -159,6 +174,29 @@ class ContentModule extends CrudModule
                 ->where('module_name', '=', $this->name)
                 ->orderByAsc('order');
         });
+    }
+
+    protected function loadPreviewContent(ContentGroup $contentGroup, array $input) : string
+    {
+        $groupDefinition = $this->contentGroups[$contentGroup->name];
+
+        $previewContentGroup = unserialize(serialize($contentGroup));
+        $this->updateContentGroup($previewContentGroup, $groupDefinition, $input);
+
+        $previewContentLoader = new PreviewContentLoader(
+            $this->authSystem->getIocContainer()->get(ContentLoaderService::class),
+            [$previewContentGroup]
+        );
+
+        $preview = $this->authSystem->getIocContainer()->bindForCallback(
+            ContentLoaderService::class,
+            $previewContentLoader,
+            function () use ($previewContentGroup, $groupDefinition) {
+                return call_user_func($groupDefinition->previewCallback, $previewContentGroup);
+            }
+        );
+
+        return $preview;
     }
 
     protected function updateContentGroup(ContentGroup $contentGroup, ContentGroupDefinition $groupDefinition, array $input)

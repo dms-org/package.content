@@ -85,6 +85,10 @@ class InterpolatingContentLoaderServiceProxy extends ContentLoaderService
             );
         }
 
+        foreach ($contentGroup->nestedArrayContentGroups as $nestedArrayContentGroup) {
+            $newContentGroup->nestedArrayContentGroups[] = $this->createPreviewContentGroup($nestedArrayContentGroup);
+        }
+
         return $newContentGroup;
     }
 

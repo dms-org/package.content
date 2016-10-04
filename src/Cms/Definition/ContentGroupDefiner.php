@@ -123,7 +123,7 @@ class ContentGroupDefiner
      *
      * Example:
      * <code>
-     * ->withArrayOf(function ('some-slider', 'Multiple Images', function (ContentGroupDefiner $group) {
+     * ->withArrayOf('some-slider', 'Multiple Images', function (ContentGroupDefiner $group) {
      *    $group->withImage(...);
      * })
      * </code>

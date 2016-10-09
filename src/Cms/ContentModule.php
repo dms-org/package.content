@@ -317,7 +317,7 @@ class ContentModule extends CrudModule
 
     protected function buildImageAltTextField(array $field)
     {
-        return Field::create('image_alt_text_' . $field['name'], $field['label'] . ' - Alt Text')->string()->defaultTo('');
+        return Field::create('image_alt_text_' . $field['name'], $field['label'] . ' - Alt Text')->string();
     }
 
     protected function defineHtmlField(CrudFormDefinition $form, array $field)

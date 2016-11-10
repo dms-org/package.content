@@ -125,7 +125,7 @@ class ContentModule extends CrudModule
                     if ($field['type'] === 'html') {
                         $this->defineHtmlField($form, $field);
                     } elseif ($field['type'] === 'image') {
-                        $this->defineImageField($form, $field);
+                        $this->defineImageField($form, $field, $group);
                     } elseif ($field['type'] === 'text') {
                         $this->defineTextField($form, $field);
                     } elseif ($field['type'] === 'metadata') {
@@ -284,11 +284,11 @@ class ContentModule extends CrudModule
         return $fieldsInOrder;
     }
 
-    protected function defineImageField(CrudFormDefinition $form, array $field)
+    protected function defineImageField(CrudFormDefinition $form, array $field, ContentGroup $group)
     {
         $fields = [
             $form->field(
-                $this->buildImageUploadField($field)
+                $this->buildImageUploadField($field, $this->contentGroups[$group->name])
             )->bindToCallbacks(function (ContentGroup $group) use ($field) {
                 return $group->hasImage($field['name']) ? $group->getImage($field['name'])->image : null;
             }, function (ContentGroup $group) {
@@ -309,13 +309,13 @@ class ContentModule extends CrudModule
         $form->continueSection($fields);
     }
 
-    protected function buildImageUploadField(array $field)
+    protected function buildImageUploadField(array $field, ContentGroupDefinition $contentGroup)
     {
         return Field::create('image_' . $field['name'], $field['label'])
             ->image()
             ->moveToPathWithStaticFileNameAndClientExtension(
-                PathHelper::combine($this->config->getImageStorageBasePath(), $this->getPackageName(), $this->getName()),
-                $field['name']
+                PathHelper::combine($this->config->getImageStorageBasePath(), $this->getName(), $contentGroup->name),
+                $field['name'] . '_' . substr(bin2hex(random_bytes(12)), 0, 12)
             );
     }
 
@@ -452,7 +452,7 @@ class ContentModule extends CrudModule
             if ($field['type'] === 'html') {
                 $fields[] = $this->buildHtmlField($field);
             } elseif ($field['type'] === 'image') {
-                $fields[] = $this->buildImageUploadField($field);
+                $fields[] = $this->buildImageUploadField($field, $groupDefinition);
 
                 if (!empty($field['alt_text'])) {
                     $fields[] = $this->buildImageAltTextField($field);

@@ -5,6 +5,7 @@ namespace Dms\Package\Content\Cms;
 use Dms\Common\Structure\DateTime\DateTime;
 use Dms\Common\Structure\Field;
 use Dms\Common\Structure\FileSystem\Image;
+use Dms\Common\Structure\FileSystem\PathHelper;
 use Dms\Common\Structure\Web\Html;
 use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Common\Crud\CrudModule;
@@ -312,7 +313,10 @@ class ContentModule extends CrudModule
     {
         return Field::create('image_' . $field['name'], $field['label'])
             ->image()
-            ->moveToPathWithRandomFileName($this->config->getImageStorageBasePath(), 32);
+            ->moveToPathWithStaticFileNameAndClientExtension(
+                PathHelper::combine($this->config->getImageStorageBasePath(), $this->getPackageName(), $this->getName()),
+                $field['name']
+            );
     }
 
     protected function buildImageAltTextField(array $field)

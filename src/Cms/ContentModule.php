@@ -12,6 +12,7 @@ use Dms\Core\Common\Crud\CrudModule;
 use Dms\Core\Common\Crud\Definition\CrudModuleDefinition;
 use Dms\Core\Common\Crud\Definition\Form\CrudFormDefinition;
 use Dms\Core\Common\Crud\Definition\Table\SummaryTableDefinition;
+use Dms\Core\File\IFile;
 use Dms\Core\Form\Builder\Form;
 use Dms\Core\Util\IClock;
 use Dms\Package\Content\Cms\Definition\ContentGroupDefinition;
@@ -313,9 +314,11 @@ class ContentModule extends CrudModule
     {
         return Field::create('image_' . $field['name'], $field['label'])
             ->image()
-            ->moveToPathWithStaticFileNameAndClientExtension(
+            ->moveToPathWithCustomFileName(
                 PathHelper::combine($this->config->getImageStorageBasePath(), $this->getName()),
-                $field['name'] . '_' . substr(bin2hex(random_bytes(12)), 0, 12)
+                function (IFile $file) use ($field) {
+                    return $field['name'] . '_' . substr(bin2hex(random_bytes(12)), 0, 12) . ($file->getExtension() ? '.' . $file->getExtension() : '');
+                }
             );
     }
 

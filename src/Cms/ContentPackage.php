@@ -179,7 +179,7 @@ abstract class ContentPackage extends Package
 
             foreach (array_intersect_key($contentGroups, $contentGroupSchemas) as $contentGroup) {
                 /** @var ContentGroup $contentGroup */
-                $contentGroupsToSync[] = $this->syncContentGroupWithSchema($contentGroup, $contentGroupSchemas[$contentGroup->name]);
+                $contentGroupsToSync[]                     = $this->syncContentGroupWithSchema($contentGroup, $contentGroupSchemas[$contentGroup->name]);
                 $contentGroupsToOrder[$contentGroup->name] = $contentGroup;
             }
 
@@ -223,7 +223,7 @@ abstract class ContentPackage extends Package
         }
 
         foreach ($contentGroupDefinition->textAreas as $area) {
-            $contentGroup->metadata[] = new ContentMetadata($area['name'], '');
+            $contentGroup->textContentAreas[] = new TextContentArea($area['name'], '');
         }
 
         foreach ($contentGroupDefinition->metadata as $item) {

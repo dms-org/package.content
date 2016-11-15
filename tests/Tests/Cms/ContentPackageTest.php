@@ -101,6 +101,7 @@ class ContentPackageTest extends CmsTestCase
                         ->withImage('banner', 'Banner')
                         ->withHtml('header', 'Header')
                         ->withText('text', 'Text')
+                        ->withTextFromOptions('option', 'Option', ['y' => 'Y', 'n' => 'N'])
                         ->withHtml('footer', 'Footer');
 
                     $content->page('home', 'Home', '/homepage')
@@ -183,6 +184,7 @@ class ContentPackageTest extends CmsTestCase
         $templateGroup->htmlContentAreas[]  = new HtmlContentArea('footer', new Html('some footer'));
         $templateGroup->imageContentAreas[] = new ImageContentArea('banner', new Image(__FILE__));
         $templateGroup->textContentAreas[]  = new TextContentArea('text', '');
+        $templateGroup->textContentAreas[]  = new TextContentArea('option', '');
 
         $homeGroup = new ContentGroup('pages', 'home', $this->mockClock());
         $homeGroup->setId(3);
@@ -245,6 +247,7 @@ class ContentPackageTest extends CmsTestCase
             'html_header'                    => 'Info',
             'html_footer'                    => 'Abc',
             'text_text'                      => '123',
+            'text_option'                    => 'y',
         ]);
 
         $homeGroup = new ContentGroup('pages', 'template', $this->mockClock());
@@ -256,6 +259,7 @@ class ContentPackageTest extends CmsTestCase
         $homeGroup->htmlContentAreas[]  = new HtmlContentArea('header', new Html('Info'));
         $homeGroup->htmlContentAreas[]  = new HtmlContentArea('footer', new Html('Abc'));
         $homeGroup->textContentAreas[]  = new TextContentArea('text', '123');
+        $homeGroup->textContentAreas[]  = new TextContentArea('option', 'y');
 
         $this->assertEquals($homeGroup, $this->repo->get(2));
     }

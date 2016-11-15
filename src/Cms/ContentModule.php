@@ -360,7 +360,13 @@ class ContentModule extends CrudModule
 
     protected function buildTextField(array $field)
     {
-        return Field::create('text_' . $field['name'], $field['label'])->string()->defaultTo('');
+        $textField = Field::create('text_' . $field['name'], $field['label'])->string()->defaultTo('');
+
+        if (isset($field['options'])) {
+            $textField->oneOf($field['options']);
+        }
+
+        return $textField;
     }
 
     protected function defineMetadataField(CrudFormDefinition $form, array $field)
@@ -417,8 +423,13 @@ class ContentModule extends CrudModule
                 }
 
             } elseif ($field['type'] === 'text') {
+                $textValue = $group->getText($field['name']);
 
-                $values['text_' . $field['name']] = $group->hasText($field['name']) ? $group->getText($field['name'])->text : '';
+                if ($group->hasText($field['name']) && (!isset($field['options']) || isset($field['options'][$textValue]))) {
+                    $values['text_' . $field['name']] = $textValue->text;
+                } else {
+                    $values['text_' . $field['name']] = '';
+                }
 
             } elseif ($field['type'] === 'metadata') {
 

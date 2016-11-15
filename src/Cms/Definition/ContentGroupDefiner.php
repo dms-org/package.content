@@ -104,6 +104,22 @@ class ContentGroupDefiner
     }
 
     /**
+     * Defines a text field that must contain a value from one of the supplied options.
+     *
+     * @param string   $name
+     * @param string   $label
+     * @param string[] $valueLabelMap
+     *
+     * @return static
+     */
+    public function withTextFromOptions(string $name, string $label, array $valueLabelMap)
+    {
+        $this->contentGroup->textAreas[$name] = ['name' => $name, 'label' => $label, 'options' => $valueLabelMap, 'order' => $this->order++];
+
+        return $this;
+    }
+
+    /**
      * Defines a metadata field.
      *
      * @param string $name

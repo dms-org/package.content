@@ -257,4 +257,12 @@ class ContentGroup extends Entity
             })
             ->asArray();
     }
+
+    /**
+     * @return string
+     */
+    public function getHash() : string
+    {
+        return md5(serialize($this));
+    }
 }

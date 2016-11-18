@@ -179,7 +179,13 @@ abstract class ContentPackage extends Package
 
             foreach (array_intersect_key($contentGroups, $contentGroupSchemas) as $contentGroup) {
                 /** @var ContentGroup $contentGroup */
-                $contentGroupsToSync[]                     = $this->syncContentGroupWithSchema($contentGroup, $contentGroupSchemas[$contentGroup->name]);
+                $originalContentHash = $contentGroup->getHash();
+                $this->syncContentGroupWithSchema($contentGroup, $contentGroupSchemas[$contentGroup->name]);
+
+                if ($contentGroup->getHash() !== $originalContentHash) {
+                    $contentGroupsToSync[] = $contentGroup;
+                }
+
                 $contentGroupsToOrder[$contentGroup->name] = $contentGroup;
             }
 
@@ -239,7 +245,7 @@ abstract class ContentPackage extends Package
      *
      * @return ContentGroup
      */
-    private function syncContentGroupWithSchema(ContentGroup $contentGroup, ContentGroupDefinition $contentGroupSchema) : ContentGroup
+    private function syncContentGroupWithSchema(ContentGroup $contentGroup, ContentGroupDefinition $contentGroupSchema)
     {
         $contentGroup->htmlContentAreas->removeWhere(function (HtmlContentArea $area) use ($contentGroupSchema) {
             return !isset($contentGroupSchema->htmlAreas[$area->name]);
@@ -297,7 +303,5 @@ abstract class ContentPackage extends Package
             ->removeWhere(function (ContentGroup $group) use ($validArrayOptions) {
                 return !isset($validArrayOptions[$group->name]);
             });
-
-        return $contentGroup;
     }
 }

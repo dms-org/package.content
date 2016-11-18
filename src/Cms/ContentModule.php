@@ -425,7 +425,7 @@ class ContentModule extends CrudModule
             } elseif ($field['type'] === 'text') {
                 $textValue = $group->getText($field['name']);
 
-                if ($group->hasText($field['name']) && (!isset($field['options']) || isset($field['options'][$textValue]))) {
+                if ($group->hasText($field['name']) && (!isset($field['options']) || isset($field['options'][$textValue->text]))) {
                     $values['text_' . $field['name']] = $textValue->text;
                 } else {
                     $values['text_' . $field['name']] = '';

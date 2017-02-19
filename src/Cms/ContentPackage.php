@@ -132,11 +132,9 @@ abstract class ContentPackage extends Package
             'icon' => 'cubes',
         ]);
 
-        $contentDefinition = new ContentPackageDefinition($this->getIocContainer()->get(ContentConfig::class));
+        $contentDefinition = new ContentPackageDefinition($this->getIocContainer()->get(ContentConfig::class), $package, $this->getIocContainer());
 
         $this->defineContent($contentDefinition);
-
-        $contentDefinition->loadPackage($package, $this->getIocContainer());
     }
 
     /**

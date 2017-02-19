@@ -28,13 +28,27 @@ class ContentPackageDefinition
     protected $contentModuleDefinitions = [];
 
     /**
+     * @var PackageDefinition
+     */
+    protected $packageDefinition;
+
+    /**
+     * @var IIocContainer
+     */
+    protected $iocContainer;
+
+    /**
      * ContentPackageDefinition constructor.
      *
-     * @param ContentConfig $config
+     * @param ContentConfig     $config
+     * @param PackageDefinition $definition
+     * @param IIocContainer     $iocContainer
      */
-    public function __construct(ContentConfig $config)
+    public function __construct(ContentConfig $config, PackageDefinition $definition, IIocContainer $iocContainer)
     {
-        $this->config = $config;
+        $this->config            = $config;
+        $this->packageDefinition = $definition;
+        $this->iocContainer      = $iocContainer;
     }
 
     /**
@@ -72,23 +86,33 @@ class ContentPackageDefinition
         $definition = new ContentModuleDefinition($name, $icon, $this->config);
         $definitionCallback($definition);
 
-        $this->contentModuleDefinitions[$name] = $definition;
+        $this->customModules([
+            $name => function () use ($definition) {
+                return $definition->loadModule(
+                    $this->iocContainer->get(IContentGroupRepository::class),
+                    $this->iocContainer->get(IAuthSystem::class),
+                    $this->iocContainer->get(IClock::class)
+                );
+            },
+        ]);
     }
 
-    public function loadPackage(PackageDefinition $package, IIocContainer $iocContainer)
+    /**
+     * Defines the modules contained within this package.
+     *
+     * Example:
+     * <code>
+     * $content->customModules([
+     *      'some-module-name' => SomeModule::class,
+     * ]);
+     * </code>
+     *
+     * @param string[] $nameModuleClassMap
+     *
+     * @return void
+     */
+    public function customModules(array $nameModuleClassMap)
     {
-        $moduleMap = [];
-
-        foreach ($this->contentModuleDefinitions as $name => $module) {
-            $moduleMap[$name] = function () use ($iocContainer, $module) {
-                return $module->loadModule(
-                    $iocContainer->get(IContentGroupRepository::class),
-                    $iocContainer->get(IAuthSystem::class),
-                    $iocContainer->get(IClock::class)
-                );
-            };
-        }
-
-        $package->modules($moduleMap);
+        $this->packageDefinition->modules($nameModuleClassMap);
     }
 }

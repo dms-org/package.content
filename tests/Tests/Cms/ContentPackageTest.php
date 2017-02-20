@@ -27,6 +27,7 @@ use Dms\Package\Content\Core\HtmlContentArea;
 use Dms\Package\Content\Core\ImageContentArea;
 use Dms\Package\Content\Core\Repositories\IContentGroupRepository;
 use Dms\Package\Content\Core\TextContentArea;
+use Dms\Package\Content\Tests\Cms\Fixtures\TestCustomModule;
 
 /**
  *
@@ -63,6 +64,10 @@ class ContentPackageTest extends CmsTestCase
                     return $this->getMockWithoutInvokingTheOriginalConstructor(IAuthSystemInPackageContext::class);
                 }
 
+                if ($class === TestCustomModule::class) {
+                    return new TestCustomModule($this->getMockWithoutInvokingTheOriginalConstructor(IAuthSystemInPackageContext::class));
+                }
+
                 return $this->getMockWithoutInvokingTheOriginalConstructor($class);
             });
 
@@ -96,6 +101,10 @@ class ContentPackageTest extends CmsTestCase
              */
             protected function defineContent(ContentPackageDefinition $content)
             {
+                $content->customModules([
+                    'custom-module' => TestCustomModule::class
+                ]);
+
                 $content->module('pages', 'file-text', function (ContentModuleDefinition $content) {
                     $content->group('template', 'Template')
                         ->withImage('banner', 'Banner')

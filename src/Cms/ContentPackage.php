@@ -163,7 +163,10 @@ abstract class ContentPackage extends Package
         }
 
         foreach ($this->loadModules() as $module) {
-            /** @var ContentModule $module */
+            if (!($module instanceof ContentModule)) {
+                continue;
+            }
+
             $contentGroups = $namespacedContentGroups[$module->getName()] ?? [];
 
             $contentGroupSchemas  = $module->getContentGroups();

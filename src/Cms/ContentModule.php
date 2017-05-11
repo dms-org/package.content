@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 
 namespace Dms\Package\Content\Cms;
 
@@ -178,7 +178,7 @@ class ContentModule extends CrudModule
         });
     }
 
-    protected function loadPreviewContent(ContentGroup $contentGroup, array $input) : string
+    protected function loadPreviewContent(ContentGroup $contentGroup, array $input): string
     {
         $groupDefinition = $this->contentGroups[$contentGroup->name];
 
@@ -256,7 +256,7 @@ class ContentModule extends CrudModule
         }
     }
 
-    private function getFieldsInOrder(ContentGroupDefinition $groupDefinition) : array
+    private function getFieldsInOrder(ContentGroupDefinition $groupDefinition): array
     {
         $fieldsInOrder = [];
 
@@ -317,9 +317,20 @@ class ContentModule extends CrudModule
             ->moveToPathWithCustomFileName(
                 PathHelper::combine($this->config->getImageStorageBasePath(), $this->getName()),
                 function (IFile $file) use ($field) {
-                    return $field['name'] . '_' . substr(bin2hex(random_bytes(12)), 0, 12) . ($file->getExtension() ? '.' . $file->getExtension() : '');
+                    return $field['name'] . '_' . substr(bin2hex(random_bytes(12)), 0, 12) . ($this->getClientExtension($file) ? '.' . $this->getClientExtension($file) : '');
                 }
             );
+    }
+
+    protected function getClientExtension(IFile $file): string
+    {
+        if (strpos($file->getClientFileNameWithFallback(), '.') === false) {
+            return '';
+        }
+
+        $parts = explode('.', $file->getClientFileNameWithFallback());
+
+        return end($parts);
     }
 
     protected function buildImageAltTextField(array $field)

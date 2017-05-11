@@ -226,6 +226,7 @@ class ContentGroup extends Entity
             ->where(function (ContentGroup $contentArea) use ($name) {
                 return $contentArea->name === $name;
             })
+            ->reindex()
             ->asArray();
     }
 

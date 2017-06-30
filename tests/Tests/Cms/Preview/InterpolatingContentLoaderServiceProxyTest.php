@@ -32,7 +32,7 @@ class InterpolatingContentLoaderServiceProxyTest extends CmsTestCase
     public function setUp()
     {
         $this->loader = new InterpolatingContentLoaderServiceProxy(
-            new ContentLoaderService(new ContentConfig(__DIR__ . '/../Fixtures', '/some/url'), $this->mockRepo(), new DateTimeClock())
+            new ContentLoaderService(new ContentConfig(__DIR__ . '/../Fixtures', '/some/url', __DIR__ . '/../Fixtures'), $this->mockRepo(), new DateTimeClock())
         );
     }
 

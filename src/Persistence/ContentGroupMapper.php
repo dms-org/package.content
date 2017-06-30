@@ -3,6 +3,7 @@
 namespace Dms\Package\Content\Persistence;
 
 use Dms\Common\Structure\DateTime\Persistence\DateTimeMapper;
+use Dms\Common\Structure\FileSystem\Persistence\FileMapper;
 use Dms\Common\Structure\FileSystem\Persistence\ImageMapper;
 use Dms\Common\Structure\Web\Persistence\HtmlMapper;
 use Dms\Core\Persistence\Db\Mapping\Definition\MapperDefinition;
@@ -11,6 +12,7 @@ use Dms\Core\Persistence\Db\Mapping\IOrm;
 use Dms\Package\Content\Core\ContentConfig;
 use Dms\Package\Content\Core\ContentGroup;
 use Dms\Package\Content\Core\ContentMetadata;
+use Dms\Package\Content\Core\FileContentArea;
 use Dms\Package\Content\Core\HtmlContentArea;
 use Dms\Package\Content\Core\ImageContentArea;
 use Dms\Package\Content\Core\TextContentArea;
@@ -101,6 +103,22 @@ class ContentGroupMapper extends EntityMapper
                 $map->property(TextContentArea::TEXT)->to('text')->asText();
 
                 $map->unique('content_group_text_unique_index')
+                    ->on(['content_group_id', 'name']);
+            });
+
+        $map->embeddedCollection(ContentGroup::FILE_CONTENT_AREAS)
+            ->toTable('content_group_file_areas')
+            ->withPrimaryKey('id')
+            ->withForeignKeyToParentAs('content_group_id')
+            ->usingCustom(function (MapperDefinition $map) {
+                $map->type(FileContentArea::class);
+
+                $map->column('content_group_id')->asUnsignedInt();
+                $map->property(FileContentArea::NAME)->to('name')->asVarchar(100);
+                $map->embedded(FileContentArea::FILE)
+                    ->using(new FileMapper('file_path', 'client_file_name', $this->contentConfig->getFileStorageBasePath()));
+
+                $map->unique('content_group_file_unique_index')
                     ->on(['content_group_id', 'name']);
             });
 

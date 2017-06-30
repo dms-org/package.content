@@ -2,6 +2,7 @@
 
 namespace Dms\Package\Content\Tests\Persistence;
 
+use Dms\Common\Structure\FileSystem\File;
 use Dms\Common\Structure\FileSystem\Image;
 use Dms\Common\Structure\Web\Html;
 use Dms\Core\Ioc\IIocContainer;
@@ -11,6 +12,7 @@ use Dms\Core\Util\IClock;
 use Dms\Package\Content\Core\ContentConfig;
 use Dms\Package\Content\Core\ContentGroup;
 use Dms\Package\Content\Core\ContentMetadata;
+use Dms\Package\Content\Core\FileContentArea;
 use Dms\Package\Content\Core\HtmlContentArea;
 use Dms\Package\Content\Core\ImageContentArea;
 use Dms\Package\Content\Core\TextContentArea;
@@ -44,7 +46,7 @@ class ContentOrmTest extends DbIntegrationTest
         $ioc->method('get')
             ->with(ContentGroupMapper::class)
             ->willReturnCallback(function () {
-                return new ContentGroupMapper($this->getMockForAbstractClass(IOrm::class), new ContentConfig(__DIR__, '/'));
+                return new ContentGroupMapper($this->getMockForAbstractClass(IOrm::class), new ContentConfig(__DIR__, '/', __DIR__));
             });
 
         $ioc->method('bindForCallback')
@@ -71,6 +73,9 @@ class ContentOrmTest extends DbIntegrationTest
         $contentGroup->textContentAreas[] = new TextContentArea('text-area-1', 'ABC');
         $contentGroup->textContentAreas[] = new TextContentArea('text-area-2', '123');
 
+        $contentGroup->fileContentAreas[] = new FileContentArea('file-area-1', new File(__FILE__));
+        $contentGroup->fileContentAreas[] = new FileContentArea('file-area-2', new File(__FILE__, 'client-name.png'));
+
         $contentGroup->metadata[] = new ContentMetadata('key', 'val');
         $contentGroup->metadata[] = new ContentMetadata('title', 'Some Title');
 
@@ -91,6 +96,10 @@ class ContentOrmTest extends DbIntegrationTest
             'content_group_text_areas'  => [
                 ['id' => 1, 'content_group_id' => 1, 'name' => 'text-area-1', 'text' => 'ABC'],
                 ['id' => 2, 'content_group_id' => 1, 'name' => 'text-area-2', 'text' => '123'],
+            ],
+            'content_group_file_areas' => [
+                ['id' => 1, 'content_group_id' => 1, 'name' => 'file-area-1', 'file_path' => basename(__FILE__), 'client_file_name' => null],
+                ['id' => 2, 'content_group_id' => 1, 'name' => 'file-area-2', 'file_path' => basename(__FILE__), 'client_file_name' => 'client-name.png'],
             ],
             'content_group_metadata'    => [
                 ['id' => 1, 'content_group_id' => 1, 'name' => 'key', 'value' => 'val'],

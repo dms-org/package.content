@@ -104,6 +104,22 @@ class ContentGroupDefiner
     }
 
     /**
+     * Defines a file upload field.
+     *
+     * @param string     $name
+     * @param string     $label
+     * @param array|null $allowedExtensions
+     *
+     * @return static
+     */
+    public function withFile(string $name, string $label, array $allowedExtensions = null)
+    {
+        $this->contentGroup->fileAreas[$name] = ['name' => $name, 'label' => $label, 'allowed_extensions' => $allowedExtensions, 'order' => $this->order++];
+
+        return $this;
+    }
+
+    /**
      * Defines a text field that must contain a value from one of the supplied options.
      *
      * @param string   $name

@@ -3,6 +3,7 @@
 namespace Dms\Package\Content\Core;
 
 use Dms\Common\Structure\DateTime\DateTime;
+use Dms\Common\Structure\FileSystem\File;
 use Dms\Core\Model\EntityCollection;
 use Dms\Core\Model\Object\ClassDefinition;
 use Dms\Core\Model\Object\Entity;
@@ -22,6 +23,7 @@ class ContentGroup extends Entity
     const HTML_CONTENT_AREAS = 'htmlContentAreas';
     const IMAGE_CONTENT_AREAS = 'imageContentAreas';
     const TEXT_CONTENT_AREAS = 'textContentAreas';
+    const FILE_CONTENT_AREAS = 'fileContentAreas';
     const METADATA = 'metadata';
     const NESTED_ARRAY_CONTENT_GROUPS = 'nestedArrayContentGroups';
     const UPDATED_AT = 'updatedAt';
@@ -57,6 +59,11 @@ class ContentGroup extends Entity
     public $textContentAreas;
 
     /**
+     * @var ValueObjectCollection|File[]
+     */
+    public $fileContentAreas;
+
+    /**
      * @var ValueObjectCollection|ContentMetadata[]
      */
     public $metadata;
@@ -87,6 +94,7 @@ class ContentGroup extends Entity
         $this->htmlContentAreas         = HtmlContentArea::collection();
         $this->imageContentAreas        = ImageContentArea::collection();
         $this->textContentAreas         = TextContentArea::collection();
+        $this->fileContentAreas         = FileContentArea::collection();
         $this->metadata                 = ContentMetadata::collection();
         $this->nestedArrayContentGroups = ContentGroup::collection();
         $this->updatedAt                = new DateTime($clock->utcNow());
@@ -110,6 +118,8 @@ class ContentGroup extends Entity
         $class->property($this->imageContentAreas)->asType(ImageContentArea::collectionType());
 
         $class->property($this->textContentAreas)->asType(TextContentArea::collectionType());
+
+        $class->property($this->fileContentAreas)->asType(FileContentArea::collectionType());
 
         $class->property($this->metadata)->asType(ContentMetadata::collectionType());
 
@@ -211,6 +221,30 @@ class ContentGroup extends Entity
     public function hasText(string $name) : bool
     {
         return $this->textContentAreas->any(function (TextContentArea $contentArea) use ($name) {
+            return $contentArea->name === $name;
+        });
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return FileContentArea|null
+     */
+    public function getFile(string $name)
+    {
+        return $this->fileContentAreas->where(function (FileContentArea $contentArea) use ($name) {
+            return $contentArea->name === $name;
+        })->first();
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function hasFile(string $name) : bool
+    {
+        return $this->fileContentAreas->any(function (FileContentArea $contentArea) use ($name) {
             return $contentArea->name === $name;
         });
     }

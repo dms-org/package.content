@@ -35,6 +35,11 @@ class ContentGroupDefinition
     /**
      * @var array
      */
+    public $fileAreas = [];
+
+    /**
+     * @var array
+     */
     public $metadata = [];
 
     /**

@@ -2,6 +2,7 @@
 
 namespace Dms\Package\Content\Cms;
 
+use Dms\Common\Structure\FileSystem\File;
 use Dms\Common\Structure\FileSystem\Image;
 use Dms\Common\Structure\Web\Html;
 use Dms\Core\Exception\NotImplementedException;
@@ -17,6 +18,7 @@ use Dms\Package\Content\Core\ContentConfig;
 use Dms\Package\Content\Core\ContentGroup;
 use Dms\Package\Content\Core\ContentLoaderService;
 use Dms\Package\Content\Core\ContentMetadata;
+use Dms\Package\Content\Core\FileContentArea;
 use Dms\Package\Content\Core\HtmlContentArea;
 use Dms\Package\Content\Core\ImageContentArea;
 use Dms\Package\Content\Core\Repositories\IContentGroupRepository;
@@ -233,6 +235,10 @@ abstract class ContentPackage extends Package
             $contentGroup->textContentAreas[] = new TextContentArea($area['name'], '');
         }
 
+        foreach ($contentGroupDefinition->fileAreas as $area) {
+            $contentGroup->fileContentAreas[] = new FileContentArea($area['name'], new File(''));
+        }
+
         foreach ($contentGroupDefinition->metadata as $item) {
             $contentGroup->metadata[] = new ContentMetadata($item['name'], '');
         }
@@ -283,6 +289,19 @@ abstract class ContentPackage extends Package
 
         foreach (array_diff_key($validTextOptions, $textNames) as $name => $unusedVariable) {
             $contentGroup->textContentAreas[] = new TextContentArea($name, '');
+        }
+
+        
+        $contentGroup->fileContentAreas->removeWhere(function (FileContentArea $area) use ($contentGroupSchema) {
+            return !isset($contentGroupSchema->fileAreas[$area->name]);
+        });
+
+        $fileNames = $contentGroup->fileContentAreas->indexBy(function (FileContentArea $area) {
+            return $area->name;
+        })->asArray();
+
+        foreach (array_diff_key($contentGroupSchema->fileAreas, $fileNames) as $area) {
+            $contentGroup->fileContentAreas[] = new FileContentArea($area['name'], new File(''));
         }
 
         $validMetadataOptions = array_fill_keys(array_column($contentGroupSchema->metadata, 'name'), true);

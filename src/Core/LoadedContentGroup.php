@@ -2,6 +2,7 @@
 
 namespace Dms\Package\Content\Core;
 
+use Dms\Common\Structure\FileSystem\File;
 use Dms\Common\Structure\FileSystem\PathHelper;
 use Dms\Core\File\IImage;
 
@@ -175,6 +176,32 @@ class LoadedContentGroup
         $metadata = $this->content->getText($name);
 
         return $metadata ? $metadata->text : $default;
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function hasFile(string $name) : bool
+    {
+        return $this->content->hasFile($name);
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return File|null
+     */
+    public function getFile(string $name)
+    {
+        $contentArea = $this->content->getFile($name);
+
+        if ($contentArea) {
+            return $contentArea->file;
+        }
+
+        return null;
     }
 
     /**

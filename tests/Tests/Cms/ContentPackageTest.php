@@ -2,6 +2,7 @@
 
 namespace Dms\Package\Content\Tests\Cms;
 
+use Dms\Common\Structure\FileSystem\File;
 use Dms\Common\Structure\FileSystem\Image;
 use Dms\Common\Structure\FileSystem\UploadAction;
 use Dms\Common\Structure\Web\Html;
@@ -10,6 +11,7 @@ use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Auth\IAuthSystemInPackageContext;
 use Dms\Core\Common\Crud\Action\Object\IObjectAction;
 use Dms\Core\Common\Crud\ICrudModule;
+use Dms\Core\File\UploadedFileProxy;
 use Dms\Core\File\UploadedImageProxy;
 use Dms\Core\Ioc\IIocContainer;
 use Dms\Core\Persistence\ArrayRepository;
@@ -23,6 +25,7 @@ use Dms\Package\Content\Cms\Definition\ContentModuleDefinition;
 use Dms\Package\Content\Cms\Definition\ContentPackageDefinition;
 use Dms\Package\Content\Core\ContentGroup;
 use Dms\Package\Content\Core\ContentMetadata;
+use Dms\Package\Content\Core\FileContentArea;
 use Dms\Package\Content\Core\HtmlContentArea;
 use Dms\Package\Content\Core\ImageContentArea;
 use Dms\Package\Content\Core\Repositories\IContentGroupRepository;
@@ -115,7 +118,8 @@ class ContentPackageTest extends CmsTestCase
 
                     $content->page('home', 'Home', '/homepage')
                         ->withHtml('info', 'Info', '#info')
-                        ->withImageAndAltText('banner', 'Banner');
+                        ->withImageAndAltText('banner', 'Banner')
+                        ->withFile('file', 'File');
 
                     $content->page('carousel', 'Carousel')
                         ->withArrayOf('images', 'Images', function (ContentGroupDefiner $image) {
@@ -200,6 +204,7 @@ class ContentPackageTest extends CmsTestCase
         $homeGroup->orderIndex          = 2;
         $homeGroup->htmlContentAreas[]  = new HtmlContentArea('info', new Html(''));
         $homeGroup->imageContentAreas[] = new ImageContentArea('banner', new Image(''));
+        $homeGroup->fileContentAreas[] = new FileContentArea('file', new File(''));
 
         $carouselGroup = new ContentGroup('pages', 'carousel', $this->mockClock());
         $carouselGroup->setId(4);
@@ -229,6 +234,10 @@ class ContentPackageTest extends CmsTestCase
                 'action' => UploadAction::STORE_NEW,
                 'file'   => new UploadedImageProxy(new Image(__DIR__ . '/Fixtures/image.gif', 'client-name.png')),
             ],
+            'file_file'                   => [
+                'action' => UploadAction::STORE_NEW,
+                'file'   => new UploadedFileProxy(new File(__FILE__, 'test.php')),
+            ],
             'image_alt_text_banner'          => 'Abc',
             'html_info'                      => 'Info',
         ]);
@@ -240,6 +249,7 @@ class ContentPackageTest extends CmsTestCase
         $image                         = new Image(__DIR__ . '/Fixtures/image.gif', 'client-name.png');
         $image->getWidth();
         $homeGroup->imageContentAreas[] = new ImageContentArea('banner', $image, 'Abc');
+        $homeGroup->fileContentAreas[] = new FileContentArea('file', new File(__FILE__, 'test.php'));
 
         $this->assertEquals($homeGroup, $this->repo->get(3));
     }

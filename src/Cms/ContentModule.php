@@ -21,6 +21,7 @@ use Dms\Package\Content\Core\ContentConfig;
 use Dms\Package\Content\Core\ContentGroup;
 use Dms\Package\Content\Core\ContentLoaderService;
 use Dms\Package\Content\Core\ContentMetadata;
+use Dms\Package\Content\Core\FileContentArea;
 use Dms\Package\Content\Core\HtmlContentArea;
 use Dms\Package\Content\Core\ImageContentArea;
 use Dms\Package\Content\Core\Repositories\IContentGroupRepository;
@@ -129,6 +130,8 @@ class ContentModule extends CrudModule
                         $this->defineImageField($form, $field);
                     } elseif ($field['type'] === 'text') {
                         $this->defineTextField($form, $field);
+                    } elseif ($field['type'] === 'file') {
+                        $this->defineFileField($form, $field);
                     } elseif ($field['type'] === 'metadata') {
                         $this->defineMetadataField($form, $field);
                     } else {
@@ -206,6 +209,7 @@ class ContentModule extends CrudModule
         $contentGroup->imageContentAreas->clear();
         $contentGroup->htmlContentAreas->clear();
         $contentGroup->textContentAreas->clear();
+        $contentGroup->fileContentAreas->clear();
         $contentGroup->metadata->clear();
         $contentGroup->nestedArrayContentGroups->clear();
 
@@ -230,6 +234,13 @@ class ContentModule extends CrudModule
                 $contentGroup->textContentAreas[] = new TextContentArea(
                     $field['name'],
                     $input['text_' . $field['name']]
+                );
+
+            } elseif ($field['type'] === 'file' && !empty($input['file_' . $field['name']])) {
+
+                $contentGroup->fileContentAreas[] = new FileContentArea(
+                    $field['name'],
+                    $input['file_' . $field['name']]
                 );
 
             } elseif ($field['type'] === 'metadata' && !empty($input['metadata_' . $field['name']])) {
@@ -270,6 +281,10 @@ class ContentModule extends CrudModule
 
         foreach ($groupDefinition->textAreas as $field) {
             $fieldsInOrder[$field['order']] = $field + ['type' => 'text'];
+        }
+
+        foreach ($groupDefinition->fileAreas as $field) {
+            $fieldsInOrder[$field['order']] = $field + ['type' => 'file'];
         }
 
         foreach ($groupDefinition->metadata as $field) {
@@ -380,6 +395,39 @@ class ContentModule extends CrudModule
         return $textField;
     }
 
+    protected function defineFileField(CrudFormDefinition $form, array $field)
+    {
+        $fields = [
+            $form->field(
+                $this->buildFileUploadField($field)
+            )->bindToCallbacks(function (ContentGroup $group) use ($field) {
+                return $group->hasFile($field['name']) ? $group->getFile($field['name'])->file : null;
+            }, function (ContentGroup $group) {
+
+            }),
+        ];
+
+        $form->continueSection($fields);
+    }
+
+    protected function buildFileUploadField(array $field)
+    {
+        $fieldBuilder = Field::create('file_' . $field['name'], $field['label'])
+            ->file()
+            ->moveToPathWithCustomFileName(
+                PathHelper::combine($this->config->getFileStorageBasePath(), $this->getName()),
+                function (IFile $file) use ($field) {
+                    return $field['name'] . '_' . substr(bin2hex(random_bytes(12)), 0, 12) . ($this->getClientExtension($file) ? '.' . $this->getClientExtension($file) : '');
+                }
+            );
+
+        if ($field['allowed_extensions']) {
+            $fieldBuilder->extensions($field['allowed_extensions']);
+        }
+
+        return $fieldBuilder;
+    }
+
     protected function defineMetadataField(CrudFormDefinition $form, array $field)
     {
         $form->continueSection([
@@ -485,6 +533,8 @@ class ContentModule extends CrudModule
 
             } elseif ($field['type'] === 'text') {
                 $fields[] = $this->buildTextField($field);
+            } elseif ($field['type'] === 'file') {
+                $fields[] = $this->buildFileUploadField($field);
             } elseif ($field['type'] === 'metadata') {
                 $fields[] = $this->buildMetadataField($field);
             } else {

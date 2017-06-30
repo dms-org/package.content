@@ -21,15 +21,22 @@ class ContentConfig
     protected $imageBaseUrl;
 
     /**
+     * @var string
+     */
+    protected $fileStorageBasePath;
+
+    /**
      * ContentConfig constructor.
      *
      * @param string $imageStorageBasePath
      * @param string $imageBaseUrl
+     * @param string $fileStorageBasePath
      */
-    public function __construct(string $imageStorageBasePath, string $imageBaseUrl)
+    public function __construct(string $imageStorageBasePath, string $imageBaseUrl, string $fileStorageBasePath)
     {
         $this->imageStorageBasePath = (new Directory($imageStorageBasePath))->getFullPath();
         $this->imageBaseUrl         = $imageBaseUrl;
+        $this->fileStorageBasePath = $fileStorageBasePath;
     }
 
     /**
@@ -46,5 +53,13 @@ class ContentConfig
     public function getImageBaseUrl() : string
     {
         return $this->imageBaseUrl;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFileStorageBasePath() : string
+    {
+        return $this->fileStorageBasePath;
     }
 }

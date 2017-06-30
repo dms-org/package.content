@@ -1,13 +1,9 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 
 namespace Dms\Package\Content\Cms\Definition;
 
-use Dms\Core\Auth\IAuthSystem;
 use Dms\Core\Exception\InvalidOperationException;
-use Dms\Core\Ioc\IIocContainer;
-use Dms\Core\Package\Definition\PackageDefinition;
 use Dms\Package\Content\Core\ContentConfig;
-use Dms\Package\Content\Core\Repositories\IContentGroupRepository;
 
 /**
  * The content config definition.
@@ -17,36 +13,74 @@ use Dms\Package\Content\Core\Repositories\IContentGroupRepository;
 class ContentConfigDefinition
 {
     /**
-     * @var ContentConfig
+     * @var string
      */
-    protected $config;
+    protected $imageStorageFilePath;
+
+    /**
+     * @var string
+     */
+    protected $rootImageUrl;
+
+    /**
+     * @var string
+     */
+    protected $fileStorageFilePath;
 
     /**
      * Defines the file path which to store the uploaded images under.
      *
      * @param string $filePath
      *
-     * @return ContentRootImageUrlDefiner
+     * @return self
      */
-    public function storeImagesUnder(string $filePath) : ContentRootImageUrlDefiner
+    public function storeImagesUnder(string $filePath): self
     {
-        return new ContentRootImageUrlDefiner(function (string $rootImageUrl) use ($filePath) {
-            $this->config = new ContentConfig($filePath, $rootImageUrl);
-        });
+        $this->imageStorageFilePath = $filePath;
+
+        return $this;
+    }
+
+    /**
+     * Defines the root url which the stored images are accessible from.
+     *
+     * @param string $rootImageUrl
+     *
+     * @return self
+     */
+    public function mappedToUrl(string $rootImageUrl): self
+    {
+        $this->rootImageUrl = $rootImageUrl;
+
+        return $this;
+    }
+
+    /**
+     * Defines the file path which to store the uploaded files under.
+     *
+     * @param string $filePath
+     *
+     * @return self
+     */
+    public function storeFilesUnder(string $filePath): self
+    {
+        $this->fileStorageFilePath = $filePath;
+
+        return $this;
     }
 
     /**
      * @return ContentConfig
      * @throws InvalidOperationException
      */
-    public function finalize() : ContentConfig
+    public function finalize(): ContentConfig
     {
-        if (!$this->config) {
+        if (!$this->imageStorageFilePath || !$this->rootImageUrl) {
             throw InvalidOperationException::format(
                 'Incomplete content config definition: must call the storeImagesUnder method'
             );
         }
 
-        return $this->config;
+        return new ContentConfig($this->imageStorageFilePath, $this->rootImageUrl, $this->fileStorageFilePath ?: $this->imageStorageFilePath);
     }
 }

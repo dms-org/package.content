@@ -2,6 +2,7 @@
 
 namespace Dms\Package\Content\Tests\Core;
 
+use Dms\Common\Structure\FileSystem\File;
 use Dms\Common\Structure\FileSystem\Image;
 use Dms\Common\Structure\Web\Html;
 use Dms\Common\Testing\CmsTestCase;
@@ -13,6 +14,7 @@ use Dms\Package\Content\Core\ContentConfig;
 use Dms\Package\Content\Core\ContentGroup;
 use Dms\Package\Content\Core\ContentLoaderService;
 use Dms\Package\Content\Core\ContentMetadata;
+use Dms\Package\Content\Core\FileContentArea;
 use Dms\Package\Content\Core\HtmlContentArea;
 use Dms\Package\Content\Core\ImageContentArea;
 use Dms\Package\Content\Core\LoadedContentGroup;
@@ -31,7 +33,7 @@ class ContentLoaderServiceTest extends CmsTestCase
 
     public function setUp()
     {
-        $this->loader = new ContentLoaderService(new ContentConfig(__DIR__ . '/../Cms/Fixtures', '/some/url'), $this->mockRepo(), new DateTimeClock());
+        $this->loader = new ContentLoaderService(new ContentConfig(__DIR__ . '/../Cms/Fixtures', '/some/url', __DIR__ . '/../Cms/Fixtures'), $this->mockRepo(), new DateTimeClock());
     }
 
     private function mockRepo() : IContentGroupRepository
@@ -48,6 +50,9 @@ class ContentLoaderServiceTest extends CmsTestCase
 
         $contentGroup->textContentAreas[] = new TextContentArea('text-a', 'some text');
         $contentGroup->textContentAreas[] = new TextContentArea('text-b', 'more text');
+
+        $contentGroup->fileContentAreas[] = new FileContentArea('file-a', new File(__FILE__));
+        $contentGroup->fileContentAreas[] = new FileContentArea('file-b', new File(__FILE__));
 
         $contentGroup->metadata[] = new ContentMetadata('key', 'val');
         $contentGroup->metadata[] = new ContentMetadata('title', 'Some Title');
@@ -79,6 +84,9 @@ class ContentLoaderServiceTest extends CmsTestCase
         $this->assertSame('some text', $group->getText('text-a'));
         $this->assertSame('more text', $group->getText('text-b'));
         $this->assertSame('', $group->getText('text-c'));
+        $this->assertSame(__FILE__, $group->getFile('file-a')->getFullPath());
+        $this->assertSame(__FILE__, $group->getFile('file-b')->getFullPath());
+        $this->assertSame(null, $group->getFile('file-c'));
         $this->assertSame('val', $group->getMetadata('key'));
         $this->assertSame('Some Title', $group->getMetadata('title'));
         $this->assertSame('<meta name="key" content="val" />' . PHP_EOL . '<title>Some Title</title>', $group->renderMetadataAsHtml());
@@ -101,6 +109,7 @@ class ContentLoaderServiceTest extends CmsTestCase
         $this->assertSame(0, $group->getContentGroup()->imageContentAreas->count());
         $this->assertSame(0, $group->getContentGroup()->metadata->count());
         $this->assertSame(0, $group->getContentGroup()->textContentAreas->count());
+        $this->assertSame(0, $group->getContentGroup()->fileContentAreas->count());
         $this->assertSame(0, $group->getContentGroup()->nestedArrayContentGroups->count());
     }
 

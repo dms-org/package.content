@@ -481,6 +481,10 @@ class ContentModule extends CrudModule
                     $values['image_alt_text_' . $field['name']] = $group->hasImage($field['name']) ? $group->getImage($field['name'])->altText : null;
                 }
 
+            } elseif ($field['type'] === 'file') {
+
+                $values['file_' . $field['name']] = $group->hasFile($field['name']) ? $group->getFile($field['name'])->file : null;
+
             } elseif ($field['type'] === 'text') {
                 $textValue = $group->getText($field['name']);
 

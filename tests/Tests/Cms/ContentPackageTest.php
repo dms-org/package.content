@@ -64,14 +64,14 @@ class ContentPackageTest extends CmsTestCase
                 }
 
                 if ($class === IAuthSystem::class) {
-                    return $this->getMockWithoutInvokingTheOriginalConstructor(IAuthSystemInPackageContext::class);
+                    return $this->getMockBuilder(IAuthSystemInPackageContext::class)->disableOriginalConstructor()->getMock();
                 }
 
                 if ($class === TestCustomModule::class) {
-                    return new TestCustomModule($this->getMockWithoutInvokingTheOriginalConstructor(IAuthSystemInPackageContext::class));
+                    return new TestCustomModule($this->getMockBuilder(IAuthSystemInPackageContext::class)->disableOriginalConstructor()->getMock());
                 }
 
-                return $this->getMockWithoutInvokingTheOriginalConstructor($class);
+                return $this->getMockBuilder($class)->disableOriginalConstructor()->getMock();
             });
 
         $ioc->method('bindForCallback')

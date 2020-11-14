@@ -29,7 +29,7 @@ class InterpolatingContentLoaderServiceProxyTest extends CmsTestCase
     protected $loader;
 
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->loader = new InterpolatingContentLoaderServiceProxy(
             new ContentLoaderService(new ContentConfig(__DIR__ . '/../Fixtures', '/some/url', __DIR__ . '/../Fixtures'), $this->mockRepo(), new DateTimeClock())

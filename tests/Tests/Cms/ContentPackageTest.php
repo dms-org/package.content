@@ -48,7 +48,7 @@ class ContentPackageTest extends CmsTestCase
      */
     protected $repo;
 
-    public function setUp()
+    public function setUp(): void
     {
         $ioc        = $this->getMockForAbstractClass(IIocContainer::class);
         $this->repo = $this->mockRepo();
@@ -285,6 +285,7 @@ class ContentPackageTest extends CmsTestCase
 
     public function testDetails()
     {
+        $this->expectNotToPerformAssertions();
         $this->package->loadModule('pages')->getParameterizedAction(ICrudModule::DETAILS_ACTION)->run([
             IObjectAction::OBJECT_FIELD_NAME => 3,
         ]);
@@ -292,6 +293,7 @@ class ContentPackageTest extends CmsTestCase
 
     public function testLoadSummaryTable()
     {
+        $this->expectNotToPerformAssertions();
         $this->package->loadModule('pages')->getTable(ICrudModule::SUMMARY_TABLE)->loadView();
     }
 

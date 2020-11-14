@@ -30,7 +30,7 @@ class ContentOrmTest extends DbIntegrationTest
      */
     protected $repo;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->repo = new DbContentGroupRepository($this->connection, $this->orm);

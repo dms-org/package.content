@@ -31,7 +31,7 @@ class ContentLoaderServiceTest extends CmsTestCase
      */
     protected $loader;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->loader = new ContentLoaderService(new ContentConfig(__DIR__ . '/../Cms/Fixtures', '/some/url', __DIR__ . '/../Cms/Fixtures'), $this->mockRepo(), new DateTimeClock());
     }
